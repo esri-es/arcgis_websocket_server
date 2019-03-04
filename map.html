@@ -1,0 +1,157 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>StreamLayer using ArcGIS API for JavaScript</title>
+    <link rel="stylesheet" href="http://js.arcgis.com/3.10/js/dojo/dijit/themes/tundra/tundra.css">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.10/js/esri/css/esri.css">
+    <style type="text/css">
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #fff;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 80%;
+        }
+    </style>
+    <script src="http://js.arcgis.com/3.10/"></script>
+</head>
+<body class="tundra">
+    <div id="map"></div>
+    <div>
+        <span>Enter websocket connection: </span><input type="text" id="txtWsUrl" value="ws://localhost:9000" style="width: 400px" /><br />
+        <input type="button" id="cmdNewStream" value="Make Stream Layer" />
+        <input type="button" id="cmdDisconnect" value="Disconnect Stream Layer" />
+    </div>
+
+
+    <script>
+        var layerDefinition = {
+            "geometryType": "esriGeometryPoint",
+            "fields": [{
+				name: "some_attr0",
+				type: "esriFieldTypeString",
+				alias: "some_attr0"
+				}, {
+				name: "some_attr1",
+				type: "esriFieldTypeString",
+				alias: "some_attr1"
+				}, {
+				name: "some_attr2",
+				type: "esriFieldTypeString",
+				alias: "some_attr2"
+				}, {
+				name: "some_attr3",
+				type: "esriFieldTypeString",
+				alias: "some_attr3"
+				}, {
+				name: "some_attr4",
+				type: "esriFieldTypeString",
+				alias: "some_attr4"
+				}]
+        };
+
+        var map, featureCollection, streamLayer;
+
+        require(["esri/map",
+          "esri/layers/StreamLayer",
+          "esri/InfoTemplate",
+          "esri/symbols/SimpleMarkerSymbol",
+          "esri/symbols/SimpleLineSymbol",
+          "esri/renderers/SimpleRenderer",
+          "esri/Color",
+          "dojo/dom",
+          "dojo/on",
+          "dojo/domReady!"
+        ], function (Map, StreamLayer, InfoTemplate, SimpleMarkerSymbol,
+                     SimpleLineSymbol, SimpleRenderer, Color, dom, on) {
+
+            map = new Map("map", {
+                basemap: "gray",
+                center: [0, 10],
+                zoom: 2
+            });
+
+            // event listeners for button clicks
+            on(dom.byId("cmdNewStream"), "click", makeNewStreamLayer);
+            on(dom.byId("cmdDisconnect"), "click", disconnectStreamLayer);
+
+            function makeStreamLayer() {
+                //Make FeatureCollection to define layer without using url
+                featureCollection = {
+                    layerDefinition: layerDefinition,
+                    featureSet: null
+                };
+
+                // Instantiate StreamLayer
+                // 1. socketUrl is the url to the GeoEvent Processor web socket.
+                // 2. purgeOptions.displayCount is the maximum number of features the
+                //    layer will display at one time
+                var layer = new StreamLayer(featureCollection, {
+                    socketUrl: txtWsUrl.value,
+                    purgeOptions: { displayCount: 200 }
+                });
+
+                //Make renderer and apply it to StreamLayer
+                var renderer = makeRenderer();
+                layer.setRenderer(renderer);
+
+                layer.on("connect", connectevt);
+                layer.on("error", errorevt);
+                return layer;
+            }
+
+            function connectevt() {
+                console.log("Connected to WebSocket server.");
+            }
+
+            function errorevt() {
+                console.log("error");
+            }
+
+            // Make new StreamLayer and add it to map.
+            function makeNewStreamLayer() {
+                disconnectStreamLayer();
+                streamLayer = makeStreamLayer();
+                map.addLayer(streamLayer);
+            }
+
+            // Disconnect StreamLayer from websocket and remove it from the map
+            function disconnectStreamLayer() {
+                if (streamLayer) {
+                    streamLayer.suspend();
+                    streamLayer.disconnect();
+                    streamLayer.clear();
+                    map.removeLayer(streamLayer);
+                    streamLayer = null;
+                }
+            }
+
+            // Make a simple renderer
+            function makeRenderer() {
+                
+                var renderer = new SimpleRenderer(
+                  new SimpleMarkerSymbol("circle", 9,
+                  new SimpleLineSymbol("solid",
+                  new Color("black"), 1.5),
+                  new Color("red")
+                ));
+                
+                return renderer;
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,11 @@
+{
+    "currentVersion": 10.5,
+    "fullVersion": "10.5.0",
+    "soapUrl": "http://ec2-75-101-155-202.compute-1.amazonaws.com:6080/arcgis/services",
+    "secureSoapUrl": "https://ec2-75-101-155-202.compute-1.amazonaws.com:6443/arcgis/services",
+    "authInfo": {
+        "isTokenBasedSecurity": true,
+        "tokenServicesUrl": "https://ec2-75-101-155-202.compute-1.amazonaws.com:6443/arcgis/tokens/",
+        "shortLivedTokenValidity": 60
+    }
+}

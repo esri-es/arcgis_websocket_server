@@ -1,0 +1,18 @@
+{
+  "name": "arcgis_websockets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "subscribe_arcgis.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-cors": "0.0.3",
+    "express-ws": "^4.0.0",
+    "websocket": "^1.0.28"
+  }
+}

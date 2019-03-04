@@ -1,0 +1,191 @@
+[ {
+    "geometry": {
+        "x": -118.270386,
+        "y": 34.024513,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 85,
+        "run_id": "40_890_1",
+        "longitude": -118.270386,
+        "heading": 195,
+        "route_id": "40",
+        "predictable": "true",
+        "latitude": 34.024513,
+        "id": "8606",
+        "received_time": 1539336556669
+    }
+}, {
+    "geometry": {
+        "x": -118.279762,
+        "y": 34.059658,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 100,
+        "run_id": "720_1023_0",
+        "longitude": -118.279762,
+        "heading": 105,
+        "route_id": "720",
+        "predictable": "true",
+        "latitude": 34.059658,
+        "id": "9313",
+        "received_time": 1539336566719
+    }
+}, {
+    "geometry": {
+        "x": -118.291496,
+        "y": 33.924137,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 117,
+        "run_id": "204_103_0",
+        "longitude": -118.291496,
+        "heading": 360,
+        "route_id": "204",
+        "predictable": "true",
+        "latitude": 33.924137,
+        "id": "9486",
+        "received_time": 1539336566978
+    }
+}, {
+    "geometry": {
+        "x": -118.291725,
+        "y": 34.011036,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 58,
+        "run_id": "204_106_1",
+        "longitude": -118.291725,
+        "heading": 180,
+        "route_id": "204",
+        "predictable": "true",
+        "latitude": 34.011036,
+        "id": "5700",
+        "received_time": 1539336566979
+    }
+}, {
+    "geometry": {
+        "x": -118.291924,
+        "y": 34.096176,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 58,
+        "run_id": "204_106_1",
+        "longitude": -118.291924,
+        "heading": 180,
+        "route_id": "204",
+        "predictable": "true",
+        "latitude": 34.096176,
+        "id": "9478",
+        "received_time": 1539336566979
+    }
+}, {
+    "geometry": {
+        "x": -118.291725,
+        "y": 34.087761,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 58,
+        "run_id": "204_103_0",
+        "longitude": -118.291725,
+        "heading": 345,
+        "route_id": "204",
+        "predictable": "true",
+        "latitude": 34.087761,
+        "id": "9432",
+        "received_time": 1539336566979
+    }
+}, {
+    "geometry": {
+        "x": -118.309227,
+        "y": 34.081795,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 47,
+        "run_id": "207_269_1",
+        "longitude": -118.309227,
+        "heading": 165,
+        "route_id": "207",
+        "predictable": "true",
+        "latitude": 34.081795,
+        "id": "9410",
+        "received_time": 1539336568482
+    }
+}, {
+    "geometry": {
+        "x": -118.308868,
+        "y": 34.010792,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 47,
+        "run_id": "207_275_0",
+        "longitude": -118.308868,
+        "heading": 345,
+        "route_id": "207",
+        "predictable": "true",
+        "latitude": 34.010792,
+        "id": "9559",
+        "received_time": 1539336568482
+    }
+}, {
+    "geometry": {
+        "x": -118.351547,
+        "y": 34.031746,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 58,
+        "run_id": "212_203_1",
+        "longitude": -118.351547,
+        "heading": 195,
+        "route_id": "212",
+        "predictable": "true",
+        "latitude": 34.031746,
+        "id": "6034",
+        "received_time": 1539336579781
+    }
+}, {
+    "geometry": {
+        "x": -118.298836,
+        "y": 34.036968,
+        "spatialReference": {
+            "wkid": 4326
+        }
+    },
+    "attributes": {
+        "seconds_since_report": 44,
+        "run_id": null,
+        "longitude": -118.298836,
+        "heading": 90,
+        "route_id": "733",
+        "predictable": "false",
+        "latitude": 34.036968,
+        "id": "7431",
+        "received_time": 1539336581286
+    }
+}]
