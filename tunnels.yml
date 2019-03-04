@@ -1,8 +1,0 @@
-authtoken: 6QkLnRzeUjeauUo4jCUdf_6MgWP2Ysjh7BSqzi1ZRPX
-tunnels:
-  ws:
-    proto: tcp
-    addr: 8000
-  app:
-    proto: http
-    addr: 8000
