@@ -4,11 +4,11 @@ var expressWs = require('express-ws')(app);
 var cors = require('express-cors');
 
 var mock  = {
-    // messages: './mock/messages.json',
-    // serviceDesc: './mock/service.js'
+    messages: './mock/messages.json',
+    serviceDesc: './mock/service.js'
 
-    messages: './mock/messages_bus.json',
-    serviceDesc: './mock/service_bus.js'
+    // messages: './mock/messages_bus.json',
+    // serviceDesc: './mock/service_bus.js'
 };
 
 const messagesArr = require(mock.messages);
