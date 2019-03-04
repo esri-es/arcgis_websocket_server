@@ -29,7 +29,7 @@ function originIsAllowed(origin) {
   return true;
 }
 
-const messagesArr = require('./messages.json');
+const messagesArr = require('./mock/messages.json');
 
 
 
