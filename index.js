@@ -1,16 +1,18 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
+const PORT = 8080;
+const TIME_INTERVAL = 2000;
+
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
     response.end();
 });
-server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
-});
 
-const TIME_INTERVAL = 2000;
+server.listen(PORT, function() {
+    console.log((new Date()) + ` Server is listening on port ${PORT}`);
+});
 
 wsServer = new WebSocketServer({
     httpServer: server,
@@ -27,7 +29,7 @@ function originIsAllowed(origin) {
   return true;
 }
 
-const messagesArr = require('./messages.json');
+const messagesArr = require('./mock/messages.json');
 
 
 

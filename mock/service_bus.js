@@ -107,7 +107,10 @@ function fill(wsUrl) {
   SERVICE.streamUrls.push({
      "transport": "ws",
      "token": "AcQCmP6xNZXhZfYI374if5otLIqcjb-LCxbidoh6uvAWjnyZ2emNc3M1CHavZBJqURdPedNaU8Jye7xdlKukeg..",
-     "urls": [wsUrl]
+     "urls": [
+         `wss://${wsUrl}`,
+         `ws://${wsUrl}`
+     ]
     });
   return SERVICE;
 }

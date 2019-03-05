@@ -15,32 +15,35 @@ var SERVICE = {
  },
  "drawingInfo": {
   "renderer": {
-   "type": "simple",
-   "description": "",
-   "symbol": {
-    "type": "esriSMS",
-    "style": "esriSMSCircle",
-    "color": [
-     5,
-     112,
-     176,
-     204
-    ],
-    "size": 10,
-    "angle": 0,
-    "xoffset": 0,
-    "yoffset": 0,
-    "outline": {
-     "color": [
-      255,
-      255,
-      255,
-      255
-     ],
-     "width": 10
-    }
+      "type": "simple",
+                           "description": "",
+                           "symbol": {
+                               "color": [
+                                   0,
+                                   169,
+                                   230,
+                                   131
+                               ],
+                               "size": 9,
+                               "angle": 0,
+                               "xoffset": 0,
+                               "yoffset": 0,
+                               "type": "esriSMS",
+                               "style": "esriSMSCircle",
+                               "outline": {
+                                   "color": [
+                                       255,
+                                       255,
+                                       255,
+                                       255
+                                   ],
+                                   "width": 1.125,
+                                   "type": "esriSLS",
+                                   "style": "esriSLSSolid"
+                               }
+                           }
    }
-  }
+
  },
  "fields": [
   {
@@ -90,7 +93,10 @@ var SERVICE = {
 function fill(wsUrl) {
   SERVICE.streamUrls.push({
      "transport": "ws",
-     "urls": [wsUrl]
+     "urls": [
+         `wss://${wsUrl}`,
+         `ws://${wsUrl}`
+     ]
     });
   return SERVICE;
 }

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+  <title>StreamLayer - 4.10</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #fff;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    .controls {
+      margin-left: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    #viewDiv {
+      height: 75%;
+      width: 100%;
+    }
+  </style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.10/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.10/"></script>
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/StreamLayer",
+      "esri/layers/GraphicsLayer",
+      "esri/geometry/Polygon",
+      "esri/Graphic"
+    ], function(Map, MapView, StreamLayer, GraphicsLayer,
+      Polygon, Graphic
+    ) {
+
+      var streamLayer, streamLayerView;
+
+      /***************************************
+       * Set up map view with initial extent
+       ***************************************/
+      var map = new Map({
+        basemap: "gray"
+      });
+
+      var mapView = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [ -117.98118, 34.00679 ],
+        zoom: 10
+      });
+
+      var graphicsLayer = new GraphicsLayer();
+      map.add(graphicsLayer);
+
+      // Connect click events to UI buttons
+      document.getElementById("toggleStreamLayerButton").addEventListener("click", toggleStreamLayer);
+      document.getElementById("toggleSpatialFilterButton").addEventListener("click", toggleSpatialFilter);
+
+      /*************************************************
+       *
+       * Functions to add and remove Stream Layer
+       *
+       *************************************************/
+      function toggleStreamLayer() {
+        if (streamLayer) {
+          removeStreamLayer();
+        }
+        else {
+          addStreamLayer();
+        }
+      }
+
+      function addStreamLayer() {
+        // URL to stream service
+        var svcUrl = document.getElementById("streamUrlText").value;
+
+        // Construct Stream Layer
+        streamLayer = new StreamLayer({
+          url: svcUrl,
+          purgeOptions: {
+            displayCount: 10000
+          }
+        });
+
+        map.add(streamLayer);
+
+        // When graphics controller created, register listeners for events
+        mapView.whenLayerView(streamLayer)
+          .then(function(layerView) {
+            streamLayerView = layerView;
+            processConnect();
+
+            layerView.watch("connectionStatus", function(value){
+              if(value === "connected"){
+                processConnect();
+              } else {
+                processDisconnect();
+              }
+            });
+
+            // FilterChange event
+            streamLayer.watch("filter", processFilterChange);
+          });
+      }
+
+      function removeStreamLayer() {
+        if (streamLayer) {
+          map.remove(streamLayer);
+          streamLayer = null;
+          graphicsLayer.removeAll();
+          processDisconnect();
+        }
+      }
+
+      /*********************************************************
+       *
+       * Stream layer event handlers
+       *
+       *********************************************************/
+      function processConnect() {
+        document.getElementById("toggleStreamLayerButton").value = "Remove Stream Layer";
+        document.getElementById("streamUrlText").style.backgroundColor = "#008000";
+        document.getElementById("toggleSpatialFilterButton").value = "Apply Filter";
+        document.getElementById("divFilterControls").style.display = "block";
+      }
+
+      function processDisconnect() {
+        document.getElementById("toggleStreamLayerButton").value = "Add Stream Layer";
+        document.getElementById("streamUrlText").style.backgroundColor = "#8b0000";
+        document.getElementById("divFilterControls").style.display = "none";
+      }
+
+      function processFilterChange(newFilter) {
+        // The event contains a filter property that is the current filter set on the service
+        // update map graphic to show current spatial filter
+        var bbox = newFilter.geometry;
+
+        graphicsLayer.removeAll();
+        if (bbox) {
+          graphicsLayer.add(new Graphic({
+            geometry: Polygon.fromExtent(bbox),
+            symbol: {
+              type: "simple-fill",  // autocasts as new SimpleFillSymbol()
+              style: "none",
+              outline: {  // autocasts as new SimpleLineSymbol()
+                color: [5, 112, 176],
+                width: 2
+              }
+            }
+          }));
+        }
+      }
+
+      /************************************************
+       *
+       * Functions to set and clear spatial filter
+       *
+       ************************************************/
+      function toggleSpatialFilter() {
+        var  currentSpatialFilter = streamLayer && streamLayer.filter.geometry ? streamLayer.filter.geometry.clone() : null;
+
+        if (!currentSpatialFilter) {
+          // Set spatial filter to map extent
+          var extent = mapView.extent.clone();;
+          setSpatialFilter(extent.expand(0.9));
+          document.getElementById("toggleSpatialFilterButton").value = "Clear Filter";
+        }
+        else {
+          setSpatialFilter(null);
+          document.getElementById("toggleSpatialFilterButton").value = "Apply Filter";
+        }
+      }
+
+      // Set spatial filter on stream layer. Setting to null clears filter
+      function setSpatialFilter(bbox) {
+        streamLayer.updateFilter({
+          geometry: bbox
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="viewDiv"></div>
+  <div class="controls">
+    <span>Stream service url: </span><input type="text" id="streamUrlText"
+      value="https://geoeventsample1.esri.com:6443/arcgis/rest/services/LABus/StreamServer"
+      style="color:#ffffff; width:600px; background-color: #8b0000" /><br>
+    <input type="button" id="toggleStreamLayerButton" value="Add Stream Layer" />
+  </div>
+  <div id="divFilterControls" class="controls" style="margin-left: 20px; display: none">
+    <span>Filter messages by map extent (Zoom to desired filter extent): </span>
+    <input type="button" id="toggleSpatialFilterButton" value="Apply Filter" /><br>
+  </div>
+</body>
+</html>

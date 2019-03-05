@@ -22,4 +22,6 @@ client.on('connect', function(connection) {
 
 });
 
-client.connect('ws://d0fa9611.ngrok.io/arcgis/rest/services/ASDITrackInformation/StreamServer/subscribe');
+const NGROK = process.argv[2];
+
+client.connect(`ws://${NGROK}/arcgis/rest/services/ASDITrackInformation/StreamServer/subscribe`);

@@ -3,18 +3,31 @@ var app = express();
 var expressWs = require('express-ws')(app);
 var cors = require('express-cors');
 
-const messagesArr = require('./messages.json');
+var mock  = {
+    messages: './mock/messages.json',
+    serviceDesc: './mock/service.js'
+
+    // messages: './mock/messages_bus.json',
+    // serviceDesc: './mock/service_bus.js'
+};
+
+const messagesArr = require(mock.messages);
+const PORT = 8000;
 const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
 const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
 
-var serviceDesc = require('./service.js')(`ws://${NGROK}${ENDPOINT}`);
-
 app.use(cors({
     allowedOrigins: [
-        NGROK,'localhost:8080'
+        NGROK, 'localhost:8080'
     ]
 }));
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.get('/arcgis/rest/info', function(req,res,next) {
   res.status(200).json({
@@ -26,6 +39,10 @@ app.get('/arcgis/rest/info', function(req,res,next) {
   })
   res.end();
 });
+
+// Construct service description JSON adding
+// (`ws://${NGROK}${ENDPOINT}`) as one of streamUrls
+var serviceDesc = require(mock.serviceDesc)(`${NGROK}${ENDPOINT}`);
 
 app.get(ENDPOINT, function(req, res, next){
   console.log(serviceDesc.streamUrls[0].urls);
@@ -52,4 +69,6 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   });
 });
 
-app.listen(8000);
+app.listen(PORT, function() {
+    console.log((new Date()) + ` StreamServer is listening on port ${PORT}`);
+});
