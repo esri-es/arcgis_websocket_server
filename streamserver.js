@@ -54,7 +54,10 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   console.log("Reached");
   var interval = setInterval(function(inst, arr) {
     if (arr.length >= 1) {
-      const data = JSON.stringify(arr.shift());
+      var data = arr.shift();
+      data.geometry.x += getRandomArbitrary(-5,5);
+      data.geometry.y += getRandomArbitrary(-5,5);
+      data = JSON.stringify(data);
       inst.send(data);
       console.log(`Sending data: ${data}`);
     } else {
@@ -72,3 +75,7 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
 app.listen(PORT, function() {
     console.log((new Date()) + ` StreamServer is listening on port ${PORT}`);
 });
+
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
