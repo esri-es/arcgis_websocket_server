@@ -8,6 +8,8 @@ It can be used with any [ArcGIS developer technology](https://developers.arcgis.
 
 ## Start the app
 
+> *We are assuming you are familiar with NodeJS, if you are not please [read this first](https://nodejs.org/en/docs/guides/getting-started-guide/)*
+
 1. Start the WebSocketserver (RealTimeServer): `node index.js`
 2. Create a tunnel: `node streamserver.js localhost:8000`
 3. Start a web server: `http-server -p 9090`
@@ -15,6 +17,8 @@ It can be used with any [ArcGIS developer technology](https://developers.arcgis.
 5. Stream service url: `http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer`
 
 ### Using HTTPS (NGROK)
+
+If you want to test this from the [sandbox sample](https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=layers-streamlayer) you can also use [ngrok](https://ngrok.com/)
 
 1) Run: `ngrok http 8000`
 2) Stop streamserver.js and run `node streamserver.js NGROK_ID.ngrok.io`
