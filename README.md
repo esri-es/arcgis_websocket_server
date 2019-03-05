@@ -18,6 +18,10 @@ It can be used with any SDK, API or product. For example add the StreamServer to
 2) Stop streamserver.js and run `node streamserver.js NGROK_ID.ngrok.io`
 3) Use: `https://NGROK_ID.ngrok.io/arcgis/rest/services/ASDITrackInformation/StreamServer` instead of `http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer`
 
+## Known issues
+
+The WebSocket Server seems to be working properly with JavaScript 3.x version and JavaScript <= v4.8. If you want to know more please [check the issues](https://github.com/hhkaos/arcgis_websockets/issues).
+
 ## Documentation
 
 * [ArcGIS Server > Stream services](http://enterprise.arcgis.com/en/server/latest/publish-services/linux/stream-services.htm)
