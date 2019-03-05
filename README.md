@@ -1,10 +1,10 @@
 # ArcGIS WebSocket
 
-This node server behaves as a GeoEvent StreamServer layer, so it will emit geographic features in the [Esri JSON](https://developers.arcgis.com/documentation/common-data-types/feature-object.htm) format though a WebSocket. This way we will be able to display a real time layer in ArcGIS without an ArcGIS Enterprise stack.
+This node server behaves as a [GeoEvent](https://www.esri.com/en-us/arcgis/products/arcgis-geoevent-server) [StreamServer](https://developers.arcgis.com/rest/services-reference/stream-service.htm) layer, so it will emit geographic features in the [Esri JSON](https://developers.arcgis.com/documentation/common-data-types/feature-object.htm) format though a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API). This way we will be able to display a real time layer in ArcGIS without an [ArcGIS Enterprise](https://www.esri.com/en-us/arcgis/products/arcgis-enterprise/overview) stack.
 
 ![custom websocket server in arcgis](https://user-images.githubusercontent.com/826965/53808519-bc44bb80-3f52-11e9-9635-8687d5046bc4.gif)
 
-It can be used with any SDK, API or product. For example add the StreamServer to a webmap and visualize it in Operations Dashboard, ArcGIS Pro, any Storymap, etc.
+It can be used with any [ArcGIS developer technology](https://developers.arcgis.com/documentation/#sdks) or [any other product](https://esri-es.github.io/awesome-arcgis/arcgis/products/). For example add the StreamServer to a [webmap](https://esri-es.github.io/awesome-arcgis/esri/open-vision/open-specifications/web-map/) and visualize it in Operations Dashboard, ArcGIS Pro, any Storymap, etc.
 
 ## Start the app
 
