@@ -2,6 +2,8 @@
 
 This node server behaves as a GeoEvent StreamServer layer, so it will emit geographic features in the [Esri JSON](https://developers.arcgis.com/documentation/common-data-types/feature-object.htm) format though a WebSocket. This way we will be able to display a real time layer in ArcGIS without an ArcGIS Enterprise stack.
 
+![custom websocket server in arcgis](https://user-images.githubusercontent.com/826965/53808519-bc44bb80-3f52-11e9-9635-8687d5046bc4.gif)
+
 It can be used with any SDK, API or product. For example add the StreamServer to a webmap and visualize it in Operations Dashboard, ArcGIS Pro, any Storymap, etc.
 
 ## Start the app
