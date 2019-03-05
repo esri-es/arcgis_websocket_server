@@ -1,4 +1,4 @@
-# ArcGIS WebSocket
+# ArcGIS WebSocket Server
 
 This node server behaves as a [GeoEvent](https://www.esri.com/en-us/arcgis/products/arcgis-geoevent-server) [StreamServer](https://developers.arcgis.com/rest/services-reference/stream-service.htm) layer, so it will emit geographic features in the [Esri JSON](https://developers.arcgis.com/documentation/common-data-types/feature-object.htm) format though a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API). This way we will be able to display a real time layer in ArcGIS without an [ArcGIS Enterprise](https://www.esri.com/en-us/arcgis/products/arcgis-enterprise/overview) stack.
 
