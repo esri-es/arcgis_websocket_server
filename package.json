@@ -13,6 +13,6 @@
     "express": "^4.16.4",
     "express-cors": "0.0.3",
     "express-ws": "^4.0.0",
-    "websocket": "^1.0.28"
+    "websocket-stream": "^5.5.0"
   }
 }
