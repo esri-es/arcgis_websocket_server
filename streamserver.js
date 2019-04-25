@@ -7,6 +7,11 @@ var websocket = require('websocket-stream')
 
 var http = require('http');
 
+const PORT = 8000;
+const TIME_INTERVAL = 2000;
+const NGROK = process.argv[2];
+const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
+
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
@@ -22,7 +27,20 @@ var wss = websocket.createServer({
   server: server
 }, handle);
 
-var messages = [];
+// Broadcast to all.
+wss.broadcast = function broadcast(data) {
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === 1) {
+      client.send(data);
+    }
+  });
+};
+
+function broadcast(d){
+    console.log('BroadCasting');
+    wss.broadcast(JSON.stringify(d));
+}
+
 
 function handle(stream) {
   // console.log("Entramos:", new Date())
@@ -40,40 +58,12 @@ function handle(stream) {
           "attributes": aux
       };
       data.attributes.FltId = aux.id_str;
-      messages.push(data);
+      broadcast(data);
   });
-  // stream.on('close', (chunk) => {
-  //     console.log('Event close:', new Date());
-  // });
-  // stream.on('end', (chunk) => {
-  //     console.log('Event end:', new Date());
-  // });
-  // stream.on('error', (chunk) => {
-  //     console.log('Event error:', new Date());
-  // });
-  // stream.on('pause', (chunk) => {
-  //     console.log('Event pause:', new Date());
-  // });
-  // stream.on('readable', (chunk) => {
-  //     console.log('Event readable:', new Date());
-  // });
-  // stream.on('resume', (chunk) => {
-  //     console.log('Event resume:', new Date());
-  // });
+
 }
 
-function decodeBuffer(message){
-    var json = JSON.stringify(message.binaryData);
-    var bufferOriginal = Buffer.from(JSON.parse(json).data);
-    var msg = bufferOriginal.toString('utf8');
 
-    return msg;
-}
-
-const PORT = 8000;
-const TIME_INTERVAL = 2000;
-const NGROK = process.argv[2];
-const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
 
 app.use(cors())
 //     cors({
@@ -111,45 +101,10 @@ app.get(ENDPOINT, function(req, res, next){
 });
 
 app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
+  // Con exponer este endpoint , simplemente apuntamos subscribe a que conecte con el ws:// o wss://
   console.log("Reached");
-  // ws.on('data', (chunk) => {
-  //     console.log('Event data:', new Date());
-  //     var aux = new Buffer.from(chunk).toString();
-  //     var data = {
-  //         "geometry":{
-  //             "x": aux.lon,
-  //             "y": aux.lat,
-  //             "spatialReference":{
-  //                 "wkid":4326
-  //             }
-  //         },
-  //         "attributes": aux
-  //     }
-
-
-  // });
-  var interval = setInterval(function(inst, arr) {
-    if (arr.length >= 1) {
-      var data = arr.shift();
-      console.log(JSON.stringify(data,null, 4))
-      inst.send(JSON.stringify(data));
-      console.log(`Sending data: ${data}`);
-    } else {
-      console.log("No more data");
-    }
-  }, TIME_INTERVAL, ws, messages);
-
-
-
-  ws.on("close",function(){
-    clearInterval(interval);
-  });
 });
 
 app.listen(PORT, function() {
     console.log((new Date()) + ` StreamServer is listening on port ${PORT}`);
 });
-
-function getRandomArbitrary(min, max) {
-    return Math.random() * (max - min) + min;
-}
