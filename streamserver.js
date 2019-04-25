@@ -20,33 +20,46 @@ server.listen(9000, function() {
 var wss = websocket.createServer({
   perMessageDeflate: false,
   server: server
-}, handle)
+}, handle);
+
+var messages = [];
 
 function handle(stream) {
-  console.log("Entramos:", new Date())
+  // console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
-      console.log('Event data:', new Date());
-      var aux = new Buffer.from(chunk);
-      console.log(aux.toString());
+      // console.log('Event data:', new Date());
+      var aux = JSON.parse(new Buffer.from(chunk).toString());
+      var data = {
+          "geometry":{
+              "x": aux.lon,
+              "y": aux.lat,
+              "spatialReference":{
+                  "wkid":4326
+              }
+          },
+          "attributes": aux
+      };
+      data.attributes.FltId = aux.id_str;
+      messages.push(data);
   });
-  stream.on('close', (chunk) => {
-      console.log('Event close:', new Date());
-  });
-  stream.on('end', (chunk) => {
-      console.log('Event end:', new Date());
-  });
-  stream.on('error', (chunk) => {
-      console.log('Event error:', new Date());
-  });
-  stream.on('pause', (chunk) => {
-      console.log('Event pause:', new Date());
-  });
-  stream.on('readable', (chunk) => {
-      console.log('Event readable:', new Date());
-  });
-  stream.on('resume', (chunk) => {
-      console.log('Event resume:', new Date());
-  });
+  // stream.on('close', (chunk) => {
+  //     console.log('Event close:', new Date());
+  // });
+  // stream.on('end', (chunk) => {
+  //     console.log('Event end:', new Date());
+  // });
+  // stream.on('error', (chunk) => {
+  //     console.log('Event error:', new Date());
+  // });
+  // stream.on('pause', (chunk) => {
+  //     console.log('Event pause:', new Date());
+  // });
+  // stream.on('readable', (chunk) => {
+  //     console.log('Event readable:', new Date());
+  // });
+  // stream.on('resume', (chunk) => {
+  //     console.log('Event resume:', new Date());
+  // });
 }
 
 function decodeBuffer(message){
@@ -57,15 +70,6 @@ function decodeBuffer(message){
     return msg;
 }
 
-var mock  = {
-    messages: './mock/messages.json',
-    serviceDesc: './mock/service.js'
-
-    // messages: './mock/messages_bus.json',
-    // serviceDesc: './mock/service_bus.js'
-};
-
-const messagesArr = require(mock.messages);
 const PORT = 8000;
 const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
@@ -98,7 +102,7 @@ app.get('/arcgis/rest/info', function(req,res,next) {
 
 // Construct service description JSON adding
 // (`ws://${NGROK}${ENDPOINT}`) as one of streamUrls
-var serviceDesc = require(mock.serviceDesc)(`${NGROK}${ENDPOINT}`);
+var serviceDesc = require('./mock/service.js')(`${NGROK}${ENDPOINT}`);
 
 app.get(ENDPOINT, function(req, res, next){
   console.log(serviceDesc.streamUrls[0].urls);
@@ -108,18 +112,32 @@ app.get(ENDPOINT, function(req, res, next){
 
 app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   console.log("Reached");
+  // ws.on('data', (chunk) => {
+  //     console.log('Event data:', new Date());
+  //     var aux = new Buffer.from(chunk).toString();
+  //     var data = {
+  //         "geometry":{
+  //             "x": aux.lon,
+  //             "y": aux.lat,
+  //             "spatialReference":{
+  //                 "wkid":4326
+  //             }
+  //         },
+  //         "attributes": aux
+  //     }
+
+
+  // });
   var interval = setInterval(function(inst, arr) {
     if (arr.length >= 1) {
       var data = arr.shift();
-      data.geometry.x += getRandomArbitrary(-5,5);
-      data.geometry.y += getRandomArbitrary(-5,5);
-      data = JSON.stringify(data);
-      inst.send(data);
+      console.log(JSON.stringify(data,null, 4))
+      inst.send(JSON.stringify(data));
       console.log(`Sending data: ${data}`);
     } else {
       console.log("No more data");
     }
-  }, TIME_INTERVAL, ws,[...messagesArr]);
+  }, TIME_INTERVAL, ws, messages);
 
 
 
