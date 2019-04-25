@@ -26,7 +26,8 @@ function handle(stream) {
   console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
       console.log('Event data:', new Date());
-      console.log(chunk.toString());
+      var aux = new Buffer.from(chunk);
+      console.log(aux.toString());
   });
   stream.on('close', (chunk) => {
       console.log('Event close:', new Date());
