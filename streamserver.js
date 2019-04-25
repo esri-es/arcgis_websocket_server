@@ -27,8 +27,8 @@ var messages = [];
 function handle(stream) {
   // console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
-      // console.log('Event data:', new Date());
       var aux = JSON.parse(new Buffer.from(chunk).toString());
+      console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
       var data = {
           "geometry":{
               "x": aux.lon,
