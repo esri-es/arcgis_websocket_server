@@ -33,7 +33,9 @@ var wss = websocket.createServer({
 // Broadcast to all.
 wss.broadcast = function broadcast(data) {
   connections.forEach(function each(client) {
+    if (client.readyState === 1) {
       client.send(data);
+    }
   });
 };
 
