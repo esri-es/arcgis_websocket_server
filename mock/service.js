@@ -1,4 +1,6 @@
-var SERVICE = {
+var jsonlint = require("jsonlint");
+
+var SERVICE = `{
     "description": null,
     "objectIdField": null,
     "displayField": "id_str",
@@ -113,6 +115,12 @@ var SERVICE = {
             "nullable": true
         },
         {
+            "name": "is_rt",
+            "type": "esriFieldTypeString",
+            "alias": "is_rt",
+            "nullable": true
+        },
+        {
             "name": "pp",
             "type": "esriFieldTypeString",
             "alias": "pp",
@@ -149,17 +157,29 @@ var SERVICE = {
 
     ],
     "capabilities": "broadcast,subscribe"
-}
+}`;
 
 function fill(wsUrl) {
-    SERVICE.streamUrls.push({
-        "transport": "ws",
-        "urls": [
-            `wss://${wsUrl}`,
-            `ws://${wsUrl}`
-        ]
-    });
-    return SERVICE;
+    try{
+        jsonlint.parse(SERVICE);
+        SERVICE = JSON.parse(SERVICE);
+        // TODO validate service schema: https://github.com/tdegrunt/jsonschema
+        SERVICE.streamUrls.push({
+            "transport": "ws",
+            "urls": [
+                `wss://${wsUrl}`,
+                `ws://${wsUrl}`
+            ]
+        });
+        return SERVICE;
+    }catch(err){
+        return {
+            msg: 'Invalid service definition talk to the admin of this service',
+            error: err
+        };
+    }
+
+
 }
 
 module.exports = fill

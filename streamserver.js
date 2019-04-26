@@ -96,7 +96,9 @@ app.get('/arcgis/rest/info', function(req,res,next) {
 var serviceDesc = require('./mock/service.js')(`${NGROK}${ENDPOINT}`);
 
 app.get(ENDPOINT, function(req, res, next){
-  console.log(serviceDesc.streamUrls[0].urls);
+  if(serviceDesc.streamUrls){
+    console.log(serviceDesc.streamUrls[0].urls);
+  }
   res.status(200).json(serviceDesc);
   res.end();
 });
