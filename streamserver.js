@@ -7,6 +7,8 @@ var websocket = require('websocket-stream')
 
 var http = require('http');
 
+const uuidv4 = require('uuid/v4');
+
 const PORT = 8000;
 const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
@@ -106,7 +108,15 @@ app.get(ENDPOINT, function(req, res, next){
 app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   // Con exponer este endpoint , simplemente apuntamos subscribe a que conecte con el ws:// o wss://
   console.log("Reached");
+  ws.uuid = uuidv4();
   connections.push(ws);
+
+  ws.on("close", function(){
+    let i = connections.findIndex((el) => el.uuid === ws.uuid);
+    connections.splice(i,1);
+    console.log(`ws disconnected [${ws.uuid}]`);
+  })
+
 });
 
 app.listen(PORT, function() {
