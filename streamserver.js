@@ -50,20 +50,24 @@ function broadcast(d){
 function handle(stream) {
   // console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
-      var aux = JSON.parse(new Buffer.from(chunk).toString());
-      console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
-      var data = {
-          "geometry":{
-              "x": aux.lon,
-              "y": aux.lat,
-              "spatialReference":{
-                  "wkid":4326
-              }
-          },
-          "attributes": aux
-      };
-      data.attributes.FltId = aux.id_str;
-      broadcast(data);
+      try{
+        var aux = JSON.parse(new Buffer.from(chunk).toString());
+        console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
+        var data = {
+            "geometry":{
+                "x": aux.lon,
+                "y": aux.lat,
+                "spatialReference":{
+                    "wkid":4326
+                }
+            },
+            "attributes": aux
+        };
+        data.attributes.FltId = aux.id_str;
+        broadcast(data);
+      } catch(e) {
+        console.error("Skipped Tweet: Unable to parse it");
+      }
   });
 
 }
