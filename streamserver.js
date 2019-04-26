@@ -2,11 +2,8 @@ var express = require('express');
 var app = express();
 var expressWs = require('express-ws')(app);
 var cors = require('express-cors');
-
 var websocket = require('websocket-stream')
-
 var http = require('http');
-
 const uuidv4 = require('uuid/v4');
 
 const PORT = 8000;
@@ -15,7 +12,6 @@ const NGROK = process.argv[2];
 const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
 
 var connections = [];
-var messages = [];
 
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
@@ -33,17 +29,13 @@ var wss = websocket.createServer({
 }, handle);
 
 // Broadcast to all.
-wss.broadcast = function broadcast(data) {
+function broadcast(d){
+  let data = JSON.stringify(d);
   connections.forEach(function each(client) {
     if (client.readyState === 1) {
       client.send(data);
     }
   });
-};
-
-function broadcast(d){
-
-    wss.broadcast(JSON.stringify(d));
 }
 
 
