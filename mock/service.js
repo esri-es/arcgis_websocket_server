@@ -111,7 +111,38 @@ var SERVICE = {
             "type": "esriFieldTypeString",
             "alias": "tweet_url",
             "nullable": true
+        },
+        {
+            "name": "pp",
+            "type": "esriFieldTypeString",
+            "alias": "pp",
+            "nullable": true
+        },
+        {
+            "name": "psoe",
+            "type": "esriFieldTypeString",
+            "alias": "psoe",
+            "nullable": true
+        },
+        {
+            "name": "podemos",
+            "type": "esriFieldTypeString",
+            "alias": "podemos",
+            "nullable": true
+        },
+        {
+            "name": "ciudadanos",
+            "type": "esriFieldTypeString",
+            "alias": "ciudadanos",
+            "nullable": true
+        },
+        {
+            "name": "vox",
+            "type": "esriFieldTypeString",
+            "alias": "vox",
+            "nullable": true
         }
+
     ],
     "currentVersion": "10.5",
     "streamUrls": [

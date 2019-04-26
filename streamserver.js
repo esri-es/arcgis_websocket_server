@@ -107,6 +107,12 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   ws.uuid = uuidv4();
   connections.push(ws);
 
+  ws.on('message', function(msg) {
+    // This comes from the connected clients
+    console.log('HEY');
+    console.log(msg);
+  });
+
   ws.on("close", function(){
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
     connections.splice(i,1);

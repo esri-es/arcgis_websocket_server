@@ -84,7 +84,9 @@
 
       function addStreamLayer() {
         // URL to stream service
-        var svcUrl = document.getElementById("streamUrlText").value;
+        var svcField = document.getElementById("streamUrlText");
+        
+        var svcUrl = svcField.value;
 
         // Construct Stream Layer
         streamLayer = new StreamLayer({
@@ -194,7 +196,7 @@
   <div id="viewDiv"></div>
   <div class="controls">
     <span>Stream service url: </span><input type="text" id="streamUrlText"
-      value=""
+      value="http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer"
       style="color:#ffffff; width:600px; background-color: #8b0000" /><br>
     <input type="button" id="toggleStreamLayerButton" value="Add Stream Layer" />
   </div>
