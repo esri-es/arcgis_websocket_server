@@ -12,6 +12,9 @@ const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
 const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
 
+var connections = [];
+var messages = [];
+
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
@@ -29,15 +32,13 @@ var wss = websocket.createServer({
 
 // Broadcast to all.
 wss.broadcast = function broadcast(data) {
-  wss.clients.forEach(function each(client) {
-    if (client.readyState === 1) {
+  connections.forEach(function each(client) {
       client.send(data);
-    }
   });
 };
 
 function broadcast(d){
-    console.log('BroadCasting');
+
     wss.broadcast(JSON.stringify(d));
 }
 
@@ -103,6 +104,7 @@ app.get(ENDPOINT, function(req, res, next){
 app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   // Con exponer este endpoint , simplemente apuntamos subscribe a que conecte con el ws:// o wss://
   console.log("Reached");
+  connections.push(ws);
 });
 
 app.listen(PORT, function() {
