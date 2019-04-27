@@ -43,7 +43,7 @@ function broadcast(d){
 function shouldBeSent(c, d){
     if(c.hasOwnProperty('filter')){
         //console.log("c.filter=",JSON.stringify(c.filter));
-        return filterTweets(d,c.filter.where)[0];
+        return filterTweets(JSON.parse(d).attributes, c.filter)[0];
     }else{
         return true;
     }
@@ -68,7 +68,7 @@ function handle(stream) {
         data.attributes.FltId = aux.id_str;
         broadcast(data);
       } catch(e) {
-        console.error("Skipped Tweet: Unable to parse it");
+        console.error(`Skipped Tweet: Unable to parse it: ${e}`);
       }
   });
 
@@ -124,7 +124,7 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
     console.log('HEY');
     console.log(msg);
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
-    connections[i].filter = msg;
+    connections[i].filter = JSON.parse(msg).filter.where;
   });
 
   ws.on("close", function(){

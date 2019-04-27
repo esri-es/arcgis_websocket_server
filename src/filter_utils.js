@@ -89,7 +89,7 @@ function evaluateQuery(d, queryStr) {
       .map(exp => exp.map(el => el.trim().replace("%","")))
       .map(exp => translate(d,exp));
 
-   console.log(lista);
+   // console.log(lista);
    return lista.reduce((old,cur,i,arr) => {
        if(i < operatorChain.length) {
             old = i < arr.length
