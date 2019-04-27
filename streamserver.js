@@ -11,6 +11,8 @@ const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
 const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
 
+const filterTweets = require('./src/filter_utils.js');
+
 var connections = [];
 
 var server = http.createServer(function(request, response) {
@@ -40,11 +42,8 @@ function broadcast(d){
 
 function shouldBeSent(c, d){
     if(c.hasOwnProperty('filter')){
-        console.log("c.filter=",JSON.stringify(c.filter));
-        //is_rt = 'true'
-        //if(c.filter.where)
-        return true;
-
+        //console.log("c.filter=",JSON.stringify(c.filter));
+        return filterTweets(d,c.filter.where)[0];
     }else{
         return true;
     }
