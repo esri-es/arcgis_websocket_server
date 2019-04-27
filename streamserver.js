@@ -32,19 +32,30 @@ var wss = websocket.createServer({
 function broadcast(d){
   let data = JSON.stringify(d);
   connections.forEach(function each(client) {
-    if (client.readyState === 1) {
-      client.send(data);
+    if (client.readyState === 1 && shouldBeSent(client, data)){
+        client.send(data);
     }
   });
 }
 
+function shouldBeSent(c, d){
+    if(c.hasOwnProperty('filter')){
+        console.log("c.filter=",JSON.stringify(c.filter));
+        //is_rt = 'true'
+        //if(c.filter.where)
+        return true;
+
+    }else{
+        return true;
+    }
+}
 
 function handle(stream) {
   // console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
       try{
         var aux = JSON.parse(new Buffer.from(chunk).toString());
-        console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
+        // console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
         var data = {
             "geometry":{
                 "x": aux.lon,
@@ -113,6 +124,8 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
     // This comes from the connected clients
     console.log('HEY');
     console.log(msg);
+    let i = connections.findIndex((el) => el.uuid === ws.uuid);
+    connections[i].filter = msg;
   });
 
   ws.on("close", function(){
