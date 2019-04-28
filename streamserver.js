@@ -34,7 +34,8 @@ var wss = websocket.createServer({
 function broadcast(d){
   let data = JSON.stringify(d);
   connections.forEach(function each(client) {
-    if (client.readyState === 1 && shouldBeSent(client, data)){
+    if (client.readyState === 1 && shouldBeSent(client, d)){
+        console.log(`Sending to [${client.uuid}]`);
         client.send(data);
     }
   });
@@ -42,8 +43,10 @@ function broadcast(d){
 
 function shouldBeSent(c, d){
     if(c.hasOwnProperty('filter')){
-        //console.log("c.filter=",JSON.stringify(c.filter));
-        return filterTweets(JSON.parse(d).attributes, c.filter)[0];
+
+        let cond = filterTweets(d.attributes, c.filter);
+        console.log(`DEBO ENVIAR : [${cond}]`);
+        return cond;
     }else{
         return true;
     }
@@ -124,7 +127,11 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
     console.log('HEY');
     console.log(msg);
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
+
+    //let harcodedQuery = "(vox = 'true') OR (psoe = 'true')";
+    //connections[i].filter = harcodedQuery;
     connections[i].filter = JSON.parse(msg).filter.where;
+
   });
 
   ws.on("close", function(){

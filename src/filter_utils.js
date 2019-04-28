@@ -74,6 +74,7 @@ var operators = {
 
 function translate (d,arr) {
    // ["ciudadanos", "=", "true"]
+   //console.log(`filter : ${arr.join(" ")}`);
    return operators[arr[1]](d,arr[0],arr[2]);
 
 }
@@ -89,8 +90,10 @@ function evaluateQuery(d, queryStr) {
       .map(exp => exp.map(el => el.trim().replace("%","")))
       .map(exp => translate(d,exp));
 
-   // console.log(lista);
-   return lista.reduce((old,cur,i,arr) => {
+
+   let result = lista.length === 1
+     ? lista[0]
+     : lista.reduce((old,cur,i,arr) => {
        if(i < operatorChain.length) {
             old = i < arr.length
               ? operatorChain[i] === "AND"
@@ -102,7 +105,9 @@ function evaluateQuery(d, queryStr) {
            return old;
        }
     },true);
-    //return lista;
+
+    console.log(`query [${queryStr}] -> ${lista} -> ${result}` );
+    return result;
 
 }
 
