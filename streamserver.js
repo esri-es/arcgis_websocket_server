@@ -5,6 +5,7 @@ var cors = require('express-cors');
 var websocket = require('websocket-stream')
 var http = require('http');
 const uuidv4 = require('uuid/v4');
+const colors = require('colors');
 
 const PORT = 8000;
 const TIME_INTERVAL = 2000;
@@ -16,13 +17,13 @@ const filterTweets = require('./src/filter_utils.js');
 var connections = [];
 
 var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
+    console.log(`${(new Date())} Received request for ${request.url})`.green);
     response.writeHead(404);
     response.end();
 });
 
 server.listen(9000, function() {
-    console.log((new Date()) + ' Server is listening on port 9000');
+    console.log(`${(new Date())} Server is listening on port 9000`.green);
 });
 
 var wss = websocket.createServer({
@@ -35,7 +36,7 @@ function broadcast(d){
   let data = JSON.stringify(d);
   connections.forEach(function each(client) {
     if (client.readyState === 1 && shouldBeSent(client, d)){
-        console.log(`Sending to [${client.uuid}]`);
+        // console.log(`Sending to [${client.uuid}]`);
         client.send(data);
     }
   });
@@ -71,7 +72,7 @@ function handle(stream) {
         data.attributes.FltId = aux.id_str;
         broadcast(data);
       } catch(e) {
-        console.error(`Skipped Tweet: Unable to parse it: ${e}`);
+        console.error(`Skipped Tweet: Unable to parse it: ${e}`.yellow);
       }
   });
 
@@ -109,39 +110,42 @@ app.get('/arcgis/rest/info', function(req,res,next) {
 var serviceDesc = require('./mock/service.js')(`${NGROK}${ENDPOINT}`);
 
 app.get(ENDPOINT, function(req, res, next){
-  if(serviceDesc.streamUrls){
-    console.log(serviceDesc.streamUrls[0].urls);
-  }
+  // if(serviceDesc.streamUrls){
+  //   console.log(serviceDesc.streamUrls[0].urls);
+  // }
   res.status(200).json(serviceDesc);
   res.end();
 });
 
 app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   // Con exponer este endpoint , simplemente apuntamos subscribe a que conecte con el ws:// o wss://
-  console.log("Reached");
+  console.log("New connection established".green);
   ws.uuid = uuidv4();
   connections.push(ws);
 
   ws.on('message', function(msg) {
     // This comes from the connected clients
-    console.log('HEY');
-    console.log(msg);
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
+    console.log(`${i} established this filter: ${msg}`.green);
 
     //let harcodedQuery = "(vox = 'true') OR (psoe = 'true')";
     //connections[i].filter = harcodedQuery;
-    connections[i].filter = JSON.parse(msg).filter.where;
+    try{
+        connections[i].filter = JSON.parse(msg).filter.where;
+    }catch(err){
+        console.log(`Invalid filter received from ${i}: ${msg}`.red);
+    };
 
   });
 
   ws.on("close", function(){
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
     connections.splice(i,1);
-    console.log(`ws disconnected [${ws.uuid}]`);
+    console.log(`ws disconnected [${ws.uuid}]`.green);
   })
 
 });
 
 app.listen(PORT, function() {
-    console.log((new Date()) + ` StreamServer is listening on port ${PORT}`);
+    console.log(`${(new Date())} StreamServer is listening on port ${PORT}`.green);
 });
