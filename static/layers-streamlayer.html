@@ -31,7 +31,7 @@
     }
   </style>
   <link rel="stylesheet" href="https://js.arcgis.com/4.8/esri/css/main.css">
-  <script src="https://js.arcgis.com/4.8"></script>
+  <script src="http://localhost:8080/4.11/init.js"></script>
   <script>
     require([
       "esri/Map",
@@ -85,7 +85,7 @@
       function addStreamLayer() {
         // URL to stream service
         var svcField = document.getElementById("streamUrlText");
-        
+
         var svcUrl = svcField.value;
 
         // Construct Stream Layer

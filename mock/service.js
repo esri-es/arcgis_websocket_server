@@ -39,9 +39,7 @@ var SERVICE = `{
                         255,
                         255
                     ],
-                    "width": 1.125,
-                    "type": "esriSLS",
-                    "style": "esriSLSSolid"
+                    "width": 1.125
                 }
             }
         }
@@ -167,7 +165,7 @@ function fill(wsUrl) {
         SERVICE.streamUrls.push({
             "transport": "ws",
             "urls": [
-                `wss://${wsUrl}`,
+                //`wss://${wsUrl}`,
                 `ws://${wsUrl}`
             ]
         });
