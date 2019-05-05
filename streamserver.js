@@ -6,11 +6,15 @@ var websocket = require('websocket-stream')
 var http = require('http');
 const uuidv4 = require('uuid/v4');
 const colors = require('colors');
+const proj4 = require('proj4');
 
 const PORT = 8000;
 const TIME_INTERVAL = 2000;
 const NGROK = process.argv[2];
 const ENDPOINT = "/arcgis/rest/services/ASDITrackInformation/StreamServer";
+const OUT_SR = {
+  wkid : 102100, latestWkid : 3857
+};
 
 const filterTweets = require('./src/filter_utils.js');
 
@@ -36,41 +40,37 @@ function broadcast(d){
   let data = JSON.stringify(d);
   connections.forEach(function each(client) {
     if (client.readyState === 1 && shouldBeSent(client, d)){
-        // console.log(`Sending to [${client.uuid}]`);
+        console.log(`Sending to [${client.uuid}]`);
         client.send(data);
     }
   });
 }
 
 function shouldBeSent(c, d){
-    if(c.hasOwnProperty('filter')){
-
-        let cond = filterTweets(d.attributes, c.filter);
-        console.log(`DEBO ENVIAR : [${cond}]`);
-        return cond;
-    }else{
-        return true;
+    if(c.hasOwnProperty('filter') && c.filter){
+      let cond = filterTweets(d.attributes, c.filter);
+      console.log(`DEBO ENVIAR : [${cond}]`);
+      return cond;
+    } else {
+      return true;
     }
 }
 
 function handle(stream) {
-  // console.log("Entramos:", new Date())
   stream.on('data', (chunk) => {
       try{
         var aux = JSON.parse(new Buffer.from(chunk).toString());
-        // console.log(`Event data [${new Date()}] ${JSON.stringify(aux)}`);
-        var data = {
-            "geometry":{
-                "x": aux.lon,
-                "y": aux.lat,
-                "spatialReference":{
-                    "wkid":4326
-                }
-            },
-            "attributes": aux
-        };
-        data.attributes.FltId = aux.id_str;
-        broadcast(data);
+        if (aux.lon !== 0 & aux.lat !== 0) {
+          var data = {
+              geometry : proj4(proj4.defs('EPSG:3857'),{
+                x : aux.lon, y : aux.lat,
+                spatialReference : OUT_SR}),
+              attributes : aux
+          };
+          data.attributes.FltId = aux.id_str;
+          broadcast(data);
+        }
+
       } catch(e) {
         console.error(`Skipped Tweet: Unable to parse it: ${e}`.yellow);
       }
@@ -126,16 +126,20 @@ app.ws(`${ENDPOINT}/subscribe`, function(ws, req) {
   ws.on('message', function(msg) {
     // This comes from the connected clients
     let i = connections.findIndex((el) => el.uuid === ws.uuid);
-    console.log(`${i} established this filter: ${msg}`.green);
 
-    //let harcodedQuery = "(vox = 'true') OR (psoe = 'true')";
-    //connections[i].filter = harcodedQuery;
+    // For 4.9+ , JS API sends a "challenge" , a filter with all the fields
+    // specified in service.js
+    // So we have to answer back
+    ws.send(JSON.stringify({
+      error: null ,
+      ...JSON.parse(msg)
+    }));
+
     try{
         connections[i].filter = JSON.parse(msg).filter.where;
     }catch(err){
         console.log(`Invalid filter received from ${i}: ${msg}`.red);
     };
-
   });
 
   ws.on("close", function(){
