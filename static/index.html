@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
-  <title>StreamLayer - 4.9</title>
+  <title>StreamLayer</title>
   <style>
     html,
     body {
@@ -30,8 +30,8 @@
       width: 100%;
     }
   </style>
-  <link rel="stylesheet" href="https://js.arcgis.com/4.8/esri/css/main.css">
-  <script src="http://localhost:8080/4.11/init.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.11/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.11/"></script>
   <script>
     require([
       "esri/Map",
@@ -112,6 +112,9 @@
 
             // FilterChange event
             //streamLayer.watch("filter", processFilterChange);
+            layerView.on("data-received", function(elem){
+              console.log("elem=",elem)
+            });
           });
       }
 
@@ -189,11 +192,18 @@
           geometry: bbox
         });
       }
+
+      function setDefinitionExpression() {
+          streamLayer.definitionExpression = "pp = '1'";
+        }
+        document.getElementById("setBtn").addEventListener('click', setDefinitionExpression)
+
     });
   </script>
 </head>
 <body>
   <div id="viewDiv"></div>
+
   <div class="controls">
     <span>Stream service url: </span><input type="text" id="streamUrlText"
       value="http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer"
@@ -204,5 +214,6 @@
     <span>Filter messages by map extent (Zoom to desired filter extent): </span>
     <input type="button" id="toggleSpatialFilterButton" value="Apply Filter" /><br>
   </div>
+  <button id="setBtn">Apply definitionExpression</button>
 </body>
 </html>
