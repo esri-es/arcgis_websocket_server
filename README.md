@@ -11,8 +11,8 @@ It can be used with any [ArcGIS developer technology](https://developers.arcgis.
 > *We are assuming you are familiar with NodeJS, if you are not please [read this first](https://nodejs.org/en/docs/guides/getting-started-guide/)*
 
 1. Start the real time server: `node streamserver.js localhost:8000`
-2. Start a web server: `http-server -p 9090`
-3. Open: [http://localhost:9090/layers-streamlayer.html](http://localhost:9090/layers-streamlayer.html)
+2. Start a web server: `cd static & http-server -p 9090`
+3. Open: [http://localhost:9090/](http://localhost:9090/)
 4. Stream service url: `http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer`
 
 ### Using HTTPS (NGROK)
