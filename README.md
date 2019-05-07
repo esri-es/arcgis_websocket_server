@@ -25,7 +25,9 @@ If you want to test this from the [sandbox sample](https://developers.arcgis.com
 
 ## Known issues
 
-The WebSocket Server seems to be working properly with JavaScript 3.x version and JavaScript <= v4.8. If you want to know more please [check the issues](https://github.com/hhkaos/arcgis_websockets/issues).
+### ArcGIS API for JavaScript version <= v4.8 & v3.x
+
+Before [this commit](https://github.com/hhkaos/arcgis_websocket_server/commit/22c48299d92e7761e6c718d2c6afa525284fc448) on May 5, 2015 this streamserver was only working with JS API <= v4.8 and v3.x. If you want to know more you can also [check this issue](https://github.com/hhkaos/arcgis_websocket_server/issues/3).
 
 ## Documentation
 
