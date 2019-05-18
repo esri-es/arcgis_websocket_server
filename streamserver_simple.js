@@ -41,11 +41,7 @@ function start(conf){
   });
 
   let pipeline = chain([
-    parser(),
-    data => {
-      console.log(data);
-      return data;
-    },
+    parser({jsonStreaming: true}),
     streamValues(),
     data => Buffer.from(JSON.stringify(data.value))
   ]);
