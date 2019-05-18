@@ -1,7 +1,6 @@
 var CONF;
 try {
   let {hostname,port,protocol} = new URL(process.argv[2]);
-  console.log(`${protocol.replace(/:/g,"")}://${hostname}${port}`);
   CONF = {
     ws : {
       server : {

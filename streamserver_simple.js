@@ -8,7 +8,21 @@ const Replace = require('stream-json/filters/Replace');
 const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
-const fs = require('fs-extra');
+const streamServerFilter = require('./src/filter_utils.js');
+
+function updateServiceInfo(obj) {
+  let service = require('./templates/service.json');
+  Object.keys(obj).forEach(k => {
+    service[k] = obj[k];
+  });
+  return service;
+}
+
+const JSAPI_VERSION = process.argv[3] || "4.11";
+
+function doChallenge() {
+  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
+}
 
 function start(conf){
   const SERVICE_NAME = conf.service.name;
@@ -23,16 +37,17 @@ function start(conf){
   let wsServerUrl = `${conf.ws.server.protocol}://${conf.ws.server.host}${wsServerPort}/`;
   let fields = esriTypes.convertToEsriFields(conf.service.fieldObj);
 
-  let serviceRes = require('./templates/service.json');
-  serviceRes.fields = fields;
-  serviceRes.streamUrls = {
-      "transport": "ws",
-      "urls": [
-          //`wss://${wsUrl}`,
-          `${wsServerUrl}`
-      ]
-  };
-
+  let serviceRes = updateServiceInfo({
+    fields : fields,
+    streamUrls : {
+        "transport": "ws",
+        "urls": [
+            //`wss://${wsUrl}`,
+            `${wsServerUrl}`
+        ]
+    }
+  })
+  var connections = {};
   var router = Router();
   router.get(`${BASE_URL}/info`, function (req, res) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -44,8 +59,7 @@ function start(conf){
   router.get(`${BASE_URL}/subscribe`, function (req, res) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.statusCode = 200;
-    fs.createReadStream(JSON.stringify(serviceRes, null, 2))
-      .pipe(res);
+    res.end();
   });
 
   let server = http.createServer(function(req, res) {
@@ -53,30 +67,63 @@ function start(conf){
   });
 
   server.listen(conf.ws.server.port, function() {
-      console.log(`${(new Date())} Server is listening on port 9000`);
+    console.log(`${(new Date())} Server is listening on port ${conf.ws.server.port}`);
   });
-
 
   let wsRemoteClient = websocket(wsClientUrl, {
     perMessageDeflate: false
   });
 
-  let pipeline = chain([
-    parser({jsonStreaming: true}),
-    streamValues(),
-    data => Buffer.from(JSON.stringify(data.value))
-  ]);
+  var wss = websocket.createServer({server: server}, setupSource(wsRemoteClient))
 
-  var wss = websocket.createServer({server: server}, setupSource(wsRemoteClient,pipeline))
-
-  var connections = [];
 
   function setupSource(pullStream,modChain) {
+    console.log( `WS Server ready at [${conf.ws.server.port}]`);
     return function handle(stream, request) {
       // `request` is the upgrade request sent by the client.
       stream.socket.uuid = uuidv4();
-      connections.push(stream.socket);
+      stream.socket.challenge = false;
+      var filter = false;
+      stream.on('data', function(buf){
+        let data = buf.toString();
+        console.log(`${data} from [${stream.socket.uuid}]`);
+        if (!connections[stream.socket.uuid].challenge && doChallenge()) {
+          // Challenge
+          stream.write(JSON.stringify({
+            error: null,
+            ...JSON.parse(data)
+          }));
+          console.log("Challenge done!");
+          connections[stream.socket.uuid].challenge = true;
+        } else {
+          // Filters
+          try{
+              connections[stream.socket.uuid].filter = JSON.parse(data).filter.where;
+              filter = true;
+          }catch(err){
+              console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
+          };
+        }
+      });
+      stream.on('close',function(){
+        console.log(`client [${stream.socket.uuid}] disconnected`);
+        delete connections[stream.socket.uuid];
+      })
 
+      let pipeline = chain([
+        parser({jsonStreaming: true}),
+        streamValues(),
+        data => {
+            return filter
+              ? streamServerFilter(data.value,connections[stream.socket.uuid].filter)
+                ? data
+                : null
+              : data;
+        },
+        data => Buffer.from(JSON.stringify(data.value))
+      ]);
+
+      connections[stream.socket.uuid] = stream.socket;
       pullStream
         .pipe(pipeline)
         .pipe(stream)

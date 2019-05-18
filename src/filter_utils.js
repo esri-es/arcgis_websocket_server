@@ -3,6 +3,7 @@ var opsInt = '(NOT)?(=|<>|LIKE|IS)(NOT)?';
 var reOpsExt = new RegExp(`\\)\\s${opsExt}\\s\\(`,"gi");
 var reOpsInt = new RegExp(`\\s${opsInt}\\s`,"gi");
 var str = `(ciudadanos = '1') AND (ciudadanos <> '1') AND (ciudadanos LIKE '1%') AND (ciudadanos LIKE '%1') AND (ciudadanos LIKE '%1%') AND (ciudadanos NOT LIKE '%1%') AND (ciudadanos IS NULL) AND (ciudadanos IS NOT NULL)`;
+const util = require("util");
 
 function buildQuery(field, op, value) {
   return `(${field} ${op} ${value})`;
@@ -106,7 +107,7 @@ function evaluateQuery(d, queryStr) {
        }
     },true);
 
-    console.log(`query [${queryStr}] -> ${lista} -> ${result}` );
+    //console.log(`data : [${util.inspect(d, { compact: true, depth: 5, breakLength: 80 })}]\nquery [${queryStr}] -> ${lista} -> ${result}` );
     return result;
 
 }
