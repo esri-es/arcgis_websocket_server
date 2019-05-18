@@ -9,6 +9,43 @@ const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
 const streamServerFilter = require('./src/filter_utils.js');
+const proj4 = require('proj4');
+
+
+function setup(serviceName) {
+  var CONF;
+  try {
+    let {hostname,port,protocol} = new URL(process.argv[2]);
+    CONF = {
+      ws : {
+        server : {
+          port : 9000,
+          protocol : "ws",
+          host : "localhost"
+        },
+        client : {
+          protocol : protocol.replace(/:/g,""),
+          host: hostname,
+          port : port,
+          geo_fields : null
+        }
+      },
+      service : {
+        name: serviceName,
+        fieldObj : null,
+        out_sr : {
+          wkid : 102100,
+          latestWkid : 3857
+        }
+      }
+    };
+  } catch(err) {
+    console.log(`ws initialization failed! reason : [${err}]`);
+    process.exit(12);
+  }
+  return CONF;
+}
+
 
 function updateServiceInfo(obj) {
   let service = require('./templates/service.json');
@@ -24,6 +61,21 @@ function doChallenge() {
   return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
 }
 
+function guessGeoFields (arr) {
+  let candidates = arr
+    .filter(fieldObj => fieldObj.type === "esriFieldTypeDouble")
+    .filter(fieldObj => /\b(latitude|longitude|lat|lon|x|y)\b/.test(fieldObj.name));
+
+  if (candidates.length >= 2) {
+    console.log(`found geofields candidates:`);
+    candidates.map(e => console.log(e.name))
+  }
+  return {
+    latField : "lat",
+    lonField : "lon"
+  }
+}
+
 function start(conf){
   const SERVICE_NAME = conf.service.name;
   const BASE_URL = `/arcgis/rest/services/${SERVICE_NAME}/StreamServer`;
@@ -36,6 +88,7 @@ function start(conf){
   let wsClientUrl = `${conf.ws.client.protocol}://${conf.ws.client.host}${wsClientPort}`;
   let wsServerUrl = `${conf.ws.server.protocol}://${conf.ws.server.host}${wsServerPort}/`;
   let fields = esriTypes.convertToEsriFields(conf.service.fieldObj);
+  let {latField,lonField} = guessGeoFields(fields);
 
   let serviceRes = updateServiceInfo({
     fields : fields,
@@ -67,18 +120,17 @@ function start(conf){
   });
 
   server.listen(conf.ws.server.port, function() {
-    console.log(`${(new Date())} Server is listening on port ${conf.ws.server.port}`);
+    console.log(`Your StreamServer is ready on [http://${conf.ws.server.host}${wsServerPort}${BASE_URL}]`);
   });
 
   let wsRemoteClient = websocket(wsClientUrl, {
     perMessageDeflate: false
   });
 
-  var wss = websocket.createServer({server: server}, setupSource(wsRemoteClient))
+  var wss = websocket.createServer({server: server}, setupSource(wsRemoteClient,conf.service.out_sr))
 
-
-  function setupSource(pullStream,modChain) {
-    console.log( `WS Server ready at [${conf.ws.server.port}]`);
+  function setupSource(pullStream,outSR) {
+    console.log( `WS Server ready at [${wsServerUrl}]`);
     return function handle(stream, request) {
       // `request` is the upgrade request sent by the client.
       stream.socket.uuid = uuidv4();
@@ -120,6 +172,14 @@ function start(conf){
                 : null
               : data;
         },
+        data => {
+          // Reprojection according to conf.
+          let [lon,lat] = proj4(proj4.defs(`EPSG:${outSR.latestWkid}`),[data.value[lonField],data.value[latField]])
+          data.value[latField] = lat;
+          data.value[lonField] = lon;
+          return data;
+
+        },
         data => Buffer.from(JSON.stringify(data.value))
       ]);
 
@@ -132,5 +192,6 @@ function start(conf){
 }
 
 module.exports = {
-  start: start
+  start: start,
+  setup: setup
 };
