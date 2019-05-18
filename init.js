@@ -5,16 +5,15 @@ try {
   CONF = {
     ws : {
       server : {
-        port : 9000
+        port : 9000,
+        protocol : "ws",
+        host : "localhost"
       },
       client : {
         protocol : protocol.replace(/:/g,""),
         host: hostname,
         port : port
       }
-    },
-    service : {
-      fields : []
     }
   };
 } catch(err) {
@@ -25,13 +24,15 @@ try {
 
 
 const testConnection = require("./utils/websocket_utils.js");
-
 const streamServer = require('./streamserver_simple.js');
 
 testConnection(CONF.ws.client)
   .then(payload => {
     //console.log(payload);
-    streamServer.start(CONF)
+    streamServer.start({...CONF,service: {
+      fieldObj : JSON.parse(payload),
+      name : "twitter"
+    }});
   })
   .catch((err) => {
     console.log(`ws initialization failed! reason : [${err}]`);

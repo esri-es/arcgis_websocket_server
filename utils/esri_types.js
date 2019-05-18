@@ -4,8 +4,7 @@ const moment = require('moment')
 const DATE_FORMATS = [moment.ISO_8601]
 
 function convertToEsriFields (obj) {
-  return Object.entries(obj)
-    .forEach(([key, value]) => getField(key,value))
+  return Object.entries(obj).map(([key,value]) => getField(key,value));
 }
 
 function getField (k,v) {
