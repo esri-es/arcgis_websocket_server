@@ -21,8 +21,6 @@ try {
   process.exit(12);
 }
 
-
-
 const testConnection = require("./utils/websocket_utils.js");
 const streamServer = require('./streamserver_simple.js');
 
