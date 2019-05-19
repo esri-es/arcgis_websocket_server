@@ -25,19 +25,21 @@ function _updateServiceInfo(obj) {
 }
 
 function _guessGeoFields (arr) {
+  let latFieldsNames = ["latitude","lat","y"];
+  let lonFieldsNames = ["longitude","long","lon","x"];
+  let regexLat = new RegExp(`\\b(${latFieldsNames.join("|")})\\b`);
+  let regexLon = new RegExp(`\\b(${lonFieldsNames.join("|")})\\b`);
+  // Lat & and Lon has to be float numbers
   let candidates = arr
-    .filter(fieldObj => fieldObj.type === "esriFieldTypeDouble")
-    .filter(fieldObj => /\b(latitude|longitude|lat|lon|x|y)\b/.test(fieldObj.name));
+    .filter(fieldObj => fieldObj.type === "esriFieldTypeDouble");
 
-  if (candidates.length >= 2) {
-    console.log(`found geofields candidates:`);
-    candidates.map(e => console.log(e.name))
-  }
-
+  let names = candidates.map(e => e.name);
+  let latField = names.find(name => regexLat.test(name));
+  let lonField = names.find(name => regexLon.test(name));
   // TO BE Reviewed
   return {
-    latField : "lat",
-    lonField : "lon"
+    latField : latField || null,
+    lonField : lonField || null
   }
 }
 
@@ -119,7 +121,7 @@ function _setupHTTPServer(serviceConf){
 
 function _setupSource(obj) {
   //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
-  let {latField,lonField} = _guessGeoFields(obj.service.info.fields);
+
   return function handle(stream, request) {
     stream.binary = false;
     stream.socket.uuid = uuidv4();
@@ -167,9 +169,9 @@ function _setupSource(obj) {
       },
       data => {
 
-        if (data.value[latField] !== 0 && data.value[lonField] !== 0) {
+        if (data.value[latField] !== 0 && data.value[lonField] !== 0 && obj.geo !== null) {
           // Reprojection according to conf.
-          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[lonField],data.value[latField]])
+          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[obj.lon],data.value[obj.lat]])
           let fixed = {
               geometry : {
                 x : lon, y : lat,
@@ -201,12 +203,22 @@ function _setupSource(obj) {
 function start(cfg){
   // First some Plumbing...
   let conf = _setup(cfg);
+  let avoidGeo = false;
+  let {latField,lonField} = _guessGeoFields(conf.service.info.fields);
+
+  if (latField === null || lonField === null ) {
+    avoidGeo = true;
+    console.warn("Unable to find field candidates on payload. Skipping Re-Projecction");
+  } else {
+    console.log(`Found spatial information in fields [${lonField},${latField}]`);
+  }
   var connections = {};
   let HTTPServer = _setupHTTPServer(conf.service);
 
   let wsRemoteClient = websocket(conf.ws.client.wsUrl, {
     perMessageDeflate: false
   });
+
 
   var wss = websocket.createServer({
     server: HTTPServer,
@@ -215,7 +227,13 @@ function start(cfg){
     _setupSource({
       pullStream : wsRemoteClient,
       service: conf.service,
-      connections : connections
+      connections : connections,
+      geo : avoidGeo
+        ? null
+        : {
+          lat : latField,
+          lon : lonField
+        }
     }))
 }
 
