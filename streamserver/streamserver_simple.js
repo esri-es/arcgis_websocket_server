@@ -25,10 +25,10 @@ function _updateServiceInfo(obj) {
 }
 
 function _guessGeoFields (arr) {
-  let latFieldsNames = ["latitude","lat","y"];
-  let lonFieldsNames = ["longitude","long","lon","x"];
-  let regexLat = new RegExp(`\\b(${latFieldsNames.join("|")})\\b`);
-  let regexLon = new RegExp(`\\b(${lonFieldsNames.join("|")})\\b`);
+  let latFieldsNames = ["latitude","coordenadas_y","lat","y"];
+  let lonFieldsNames = ["longitude","coordenadas_x","long","lon","lng","x"];
+  let regexLat = new RegExp(`\\b(${latFieldsNames.join("|")})\\b`, "i");
+  let regexLon = new RegExp(`\\b(${lonFieldsNames.join("|")})\\b`, "i");
   // Lat & and Lon has to be float numbers
   let candidates = arr
     .filter(fieldObj => fieldObj.type === "esriFieldTypeDouble");
@@ -58,7 +58,6 @@ function _setup(config) {
       info : _updateServiceInfo({ fields : fields}),
       base_url : `/arcgis/rest/services/${config.service.name}/StreamServer`
     }
-
   };
 
   return newConfig;
