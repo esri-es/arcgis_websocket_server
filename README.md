@@ -10,22 +10,48 @@ It can be used with any [ArcGIS developer technology](https://developers.arcgis.
 
 > *We are assuming you are familiar with NodeJS, if you are not please [read this first](https://nodejs.org/en/docs/guides/getting-started-guide/)*
 
-1. Start the real time server: `node streamserver.js localhost:8000`
-2. Start a web server: `cd static & http-server -p 9090`
-3. Open: [http://localhost:9090/](http://localhost:9090/)
-4. Stream service url: `http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer`
+1. Check [init.js](https://github.com/esri-es/arcgis_websocket_server/blob/feature/dynamic_service/init.js#L4) and fill in **SERVICE_CONF** object properly.
+
+```js
+const SERVICE_CONF = {
+  name : "twitter",
+  out_sr : {
+    wkid : 102100,
+    latestWkid : 3857
+  },
+  port : 9000,
+  host : process.env["NGROK"]  || "localhost",
+  protocol : process.env["NGROK"] ? "https" : "http"
+};
+```
+
+> Be aware of the **name : "twitter"**. It will be propagated below, in the instructions. If you want to use othe name, change it also along the instructions.
+
+2. Start the real time server: `node init.js "ws://localhost:8888" "4.11"`
+
+> In this example **ws://localhost:8888** is the websocket connection we want to consume data from. This websocket connection it's not the same as the one which will be exposed by **StreamServer**. But don't worry, all will be wired up (luckily)
+
+> It will check the **websocket** connection first. If it's any problem, it will notice it, and it will warn you :-)
+
+> If it's able to connect, it "automagically" set the fields for your **StreamServer** according to the payload received in the websocket connection attempted before.
+
+3. Start a web server: `cd example & http-server -p 9090`
+4. Open: [http://localhost:9090/](http://localhost:9090/)
+1. Stream service url: `http://localhost:9000/arcgis/rest/services/twitter/StreamServer`
 
 ### Using HTTPS (NGROK)
 
 If you want to test this from the [sandbox sample](https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=layers-streamlayer) you can also use [ngrok](https://ngrok.com/)
 
-1) Run: `ngrok http 8000`
-2) Stop streamserver.js and run `node streamserver.js NGROK_ID.ngrok.io`
-3) Use: `https://NGROK_ID.ngrok.io/arcgis/rest/services/ASDITrackInformation/StreamServer` instead of `http://localhost:8000/arcgis/rest/services/ASDITrackInformation/StreamServer`
+1) Run: `ngrok http 9000`
+2) Stop init.js and run `NGROK=yourid.ngrok.io node init.js "ws://localhost:8888" "4.11"`
+3) Use: `https://yourid.ngrok.io/arcgis/rest/services/twitter/StreamServer` instead of `http://localhost:9000/arcgis/rest/services/twitter/StreamServer`
 
 ## Known issues
 
 ### ArcGIS API for JavaScript version <= v4.8 & v3.x
+
+> UPDATE : Working in a version which can handle any version! Cross your fingers!
 
 Before [this commit](https://github.com/hhkaos/arcgis_websocket_server/commit/22c48299d92e7761e6c718d2c6afa525284fc448) on May 5, 2015 this streamserver was only working with JS API <= v4.8 and v3.x. If you want to know more you can also [check this issue](https://github.com/hhkaos/arcgis_websocket_server/issues/3).
 

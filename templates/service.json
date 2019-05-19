@@ -1,0 +1,50 @@
+{
+    "description": null,
+    "objectIdField": null,
+    "displayField": "id_str",
+    "timeInfo": {
+        "trackIdField": "id_str",
+        "startTimeField": "MsgTime",
+        "endTimeField": null
+    },
+    "geometryType": "esriGeometryPoint",
+    "geometryField": "Location",
+    "spatialReference": {
+        "wkid": 4326,
+        "latestWkid": 4326
+    },
+    "drawingInfo": {
+        "renderer": {
+            "type": "simple",
+            "description": "",
+            "symbol": {
+                "color": [
+                    0,
+                    169,
+                    230,
+                    131
+                ],
+                "size": 9,
+                "angle": 0,
+                "xoffset": 0,
+                "yoffset": 0,
+                "type": "esriSMS",
+                "style": "esriSMSCircle",
+                "outline": {
+                    "color": [
+                        255,
+                        255,
+                        255,
+                        255
+                    ],
+                    "width": 1.125
+                }
+            }
+        }
+
+    },
+    "fields": null,
+    "currentVersion": "10.5",
+    "streamUrls": null,
+    "capabilities": "broadcast,subscribe"
+}
