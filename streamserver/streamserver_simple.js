@@ -17,7 +17,7 @@ function _doChallenge() {
 }
 
 function _updateServiceInfo(obj) {
-  let service = require('./templates/service.json');
+  let service = require('../templates/service.json');
   Object.keys(obj).forEach(k => {
     service[k] = obj[k];
   });
