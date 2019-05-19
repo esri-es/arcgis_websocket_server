@@ -7,9 +7,9 @@ const SERVICE_CONF = {
     wkid : 102100,
     latestWkid : 3857
   },
-  port : process.env["NGROK"] ? null : 9000,
-  host : process.env["NGROK"] || "localhost",
-  protocol : process.env["NGROK"] ? new URL(process.env["NGROK"]).protocol : "http"
+  port : process.env["NGROK"] ? 9000 : 9000,
+  host : process.env["NGROK"]  || "localhost",
+  protocol : process.env["NGROK"] ? "https" : "http"
 };
 
 var wsClientConn = process.argv[2];

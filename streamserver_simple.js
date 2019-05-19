@@ -64,10 +64,13 @@ function _setup(config) {
 
 function _setupHTTPServer(serviceConf){
   var router = Router();
-  let wsServerPort = serviceConf.port ?
-      `:${serviceConf.port}`
-      : "";
-  let wsServerUrl = `ws://${serviceConf.host}${wsServerPort}${serviceConf.base_url}`;
+  let isNgrok = /ngrok.io/.test(serviceConf.host);
+  let wsServerPort = isNgrok
+      ? ""
+      : serviceConf.port
+        ? `:${serviceConf.port}`
+        : "";
+  let wsServerUrl = `${isNgrok ? "wss" : "ws"}://${serviceConf.host}${wsServerPort}${serviceConf.base_url}`;
   // Update serviceConf.info prior to serve it from HTTPServer
   serviceConf.info.streamUrls = [{
     transport : "ws",
@@ -108,7 +111,7 @@ function _setupHTTPServer(serviceConf){
   });
 
   server.listen(serviceConf.port, function() {
-    console.log(`Your StreamServer is ready on [${serviceConf.protocol}://${serviceConf.host}${serviceConf.port}${serviceConf.base_url}]`);
+    console.log(`Your StreamServer is ready on [${serviceConf.protocol}://${serviceConf.host}${wsServerPort}${serviceConf.base_url}]`);
   });
 
   return server;
