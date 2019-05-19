@@ -4,50 +4,19 @@ const Router = require('router');
 const finalhandler = require('finalhandler');
 const {parser} = require('stream-json/Parser');
 const {streamValues} = require('stream-json/streamers/StreamValues');
-const Replace = require('stream-json/filters/Replace');
 const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
 const streamServerFilter = require('./src/filter_utils.js');
 const proj4 = require('proj4');
 
+const JSAPI_VERSION = process.argv[3] || "4.11";
 
-function setup(serviceName) {
-  var CONF;
-  try {
-    let {hostname,port,protocol} = new URL(process.argv[2]);
-    CONF = {
-      ws : {
-        server : {
-          port : 9000,
-          protocol : "ws",
-          host : "localhost"
-        },
-        client : {
-          protocol : protocol.replace(/:/g,""),
-          host: hostname,
-          port : port,
-          geo_fields : null
-        }
-      },
-      service : {
-        name: serviceName,
-        fieldObj : null,
-        out_sr : {
-          wkid : 102100,
-          latestWkid : 3857
-        }
-      }
-    };
-  } catch(err) {
-    console.log(`ws initialization failed! reason : [${err}]`);
-    process.exit(12);
-  }
-  return CONF;
+function _doChallenge() {
+  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
 }
 
-
-function updateServiceInfo(obj) {
+function _updateServiceInfo(obj) {
   let service = require('./templates/service.json');
   Object.keys(obj).forEach(k => {
     service[k] = obj[k];
@@ -55,13 +24,7 @@ function updateServiceInfo(obj) {
   return service;
 }
 
-const JSAPI_VERSION = process.argv[3] || "4.11";
-
-function doChallenge() {
-  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
-}
-
-function guessGeoFields (arr) {
+function _guessGeoFields (arr) {
   let candidates = arr
     .filter(fieldObj => fieldObj.type === "esriFieldTypeDouble")
     .filter(fieldObj => /\b(latitude|longitude|lat|lon|x|y)\b/.test(fieldObj.name));
@@ -70,48 +33,73 @@ function guessGeoFields (arr) {
     console.log(`found geofields candidates:`);
     candidates.map(e => console.log(e.name))
   }
+
+  // TO BE Reviewed
   return {
     latField : "lat",
     lonField : "lon"
   }
 }
 
-function start(conf){
-  const SERVICE_NAME = conf.service.name;
-  const BASE_URL = `/arcgis/rest/services/${SERVICE_NAME}/StreamServer`;
-  let wsClientPort = conf.ws.client.port ?
-    `:${conf.ws.client.port}`
-    : "";
-  let wsServerPort = conf.ws.server.port ?
-      `:${conf.ws.server.port}`
-      : "";
-  let wsClientUrl = `${conf.ws.client.protocol}://${conf.ws.client.host}${wsClientPort}`;
-  let wsServerUrl = `${conf.ws.server.protocol}://${conf.ws.server.host}${wsServerPort}/`;
-  let fields = esriTypes.convertToEsriFields(conf.service.fieldObj);
-  let {latField,lonField} = guessGeoFields(fields);
-
-  let serviceRes = updateServiceInfo({
-    fields : fields,
-    streamUrls : {
-        "transport": "ws",
-        "urls": [
-            //`wss://${wsUrl}`,
-            `${wsServerUrl}`
-        ]
+function _setup(config) {
+  let fields = esriTypes.convertToEsriFields(config.payload);
+  let newConfig = {
+    ws : {
+      server : {
+        port : config.service.port,
+        protocol : "ws",
+        host : config.service.host,
+      },
+      client : {...config.client}
+    },
+    service : {...config.service,
+      info : _updateServiceInfo({ fields : fields}),
+      base_url : `/arcgis/rest/services/${config.service.name}/StreamServer`
     }
-  })
-  var connections = {};
+
+  };
+
+  return newConfig;
+}
+
+function _setupHTTPServer(serviceConf){
   var router = Router();
-  router.get(`${BASE_URL}/info`, function (req, res) {
+  let wsServerPort = serviceConf.port ?
+      `:${serviceConf.port}`
+      : "";
+  let wsServerUrl = `ws://${serviceConf.host}${wsServerPort}${serviceConf.base_url}`;
+  // Update serviceConf.info prior to serve it from HTTPServer
+  serviceConf.info.streamUrls = [{
+    transport : "ws",
+    urls: [
+      //`wss://${wsUrl}`,
+      `${wsServerUrl}`
+    ]
+  }];
+
+  router.get(`${serviceConf.base_url}`, function (req, res) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.statusCode = 200;
-    res.write(JSON.stringify(serviceRes));
+    res.write(JSON.stringify(serviceConf.info));
     res.end();
 
   });
-  router.get(`${BASE_URL}/subscribe`, function (req, res) {
+
+  // Retro-compatibility end-point (versions before 4.8)
+  router.get(`/arcgis/rest/info`, function (req, res) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.statusCode = 200;
+    res.write(JSON.stringify({
+          currentVersion: 10.5,
+          fullVersion: "10.5.0",
+          authInfo: {
+              isTokenBasedSecurity: false
+          }
+    }));
     res.end();
   });
 
@@ -119,79 +107,117 @@ function start(conf){
     router(req, res, finalhandler(req, res));
   });
 
-  server.listen(conf.ws.server.port, function() {
-    console.log(`Your StreamServer is ready on [http://${conf.ws.server.host}${wsServerPort}${BASE_URL}]`);
+  server.listen(serviceConf.port, function() {
+    console.log(`Your StreamServer is ready on [${serviceConf.protocol}://${serviceConf.host}${serviceConf.port}${serviceConf.base_url}]`);
   });
 
-  let wsRemoteClient = websocket(wsClientUrl, {
-    perMessageDeflate: false
-  });
+  return server;
+}
 
-  var wss = websocket.createServer({server: server}, setupSource(wsRemoteClient,conf.service.out_sr))
-
-  function setupSource(pullStream,outSR) {
-    console.log( `WS Server ready at [${wsServerUrl}]`);
-    return function handle(stream, request) {
-      // `request` is the upgrade request sent by the client.
-      stream.socket.uuid = uuidv4();
-      stream.socket.challenge = false;
-      var filter = false;
-      stream.on('data', function(buf){
-        let data = buf.toString();
-        console.log(`${data} from [${stream.socket.uuid}]`);
-        if (!connections[stream.socket.uuid].challenge && doChallenge()) {
-          // Challenge
+function _setupSource(obj) {
+  //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
+  let {latField,lonField} = _guessGeoFields(obj.service.info.fields);
+  return function handle(stream, request) {
+    stream.binary = false;
+    stream.socket.uuid = uuidv4();
+    stream.socket.challenge = false;
+    var filter = false;
+    stream.on('data', function(buf){
+      let data = buf.toString();
+      console.log(`${data} from [${stream.socket.uuid}]`);
+      if (!obj.connections[stream.socket.uuid].challenge && _doChallenge()) {
+        // Challenge
+        try {
           stream.write(JSON.stringify({
             error: null,
             ...JSON.parse(data)
           }));
-          console.log("Challenge done!");
-          connections[stream.socket.uuid].challenge = true;
-        } else {
-          // Filters
-          try{
-              connections[stream.socket.uuid].filter = JSON.parse(data).filter.where;
-              filter = true;
-          }catch(err){
-              console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
-          };
+        } catch(err) {
+          console.log(`bad payload[${data}]`);
         }
-      });
-      stream.on('close',function(){
-        console.log(`client [${stream.socket.uuid}] disconnected`);
-        delete connections[stream.socket.uuid];
-      })
+        console.log("Challenge done!");
+        obj.connections[stream.socket.uuid].challenge = true;
+      } else {
+        // Filters
+        try{
+            obj.connections[stream.socket.uuid].filter = JSON.parse(data).filter.where;
+            filter = true;
+        }catch(err){
+            console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
+        };
+      }
+    });
+    stream.on('close',function(){
+      console.log(`client [${stream.socket.uuid}] disconnected`);
+      delete obj.connections[stream.socket.uuid];
+    })
 
-      let pipeline = chain([
-        parser({jsonStreaming: true}),
-        streamValues(),
-        data => {
-            return filter
-              ? streamServerFilter(data.value,connections[stream.socket.uuid].filter)
-                ? data
-                : null
-              : data;
-        },
-        data => {
+    let pipeline = chain([
+      parser({jsonStreaming: true}),
+      streamValues(),
+      data => {
+          return filter
+            ? streamServerFilter(data.value,obj.connections[stream.socket.uuid].filter)
+              ? data
+              : null
+            : data;
+      },
+      data => {
+
+        if (data.value[latField] !== 0 && data.value[lonField] !== 0) {
           // Reprojection according to conf.
-          let [lon,lat] = proj4(proj4.defs(`EPSG:${outSR.latestWkid}`),[data.value[lonField],data.value[latField]])
+          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[lonField],data.value[latField]])
           data.value[latField] = lat;
           data.value[lonField] = lon;
+          let fixed = {
+              geometry : {
+                x : lon, y : lat,
+                spatialReference : obj.service.out_sr
+              },
+              attributes : data.value
+          };
+          fixed.attributes.FltId = data.value.id_str;
+          data.value = fixed;
+
           return data;
+        } else {
+          return null
+        }
+      },
+      data => {
+        return JSON.stringify(data.value)
+      }
+    ]);
 
-        },
-        data => Buffer.from(JSON.stringify(data.value))
-      ]);
+    obj.connections[stream.socket.uuid] = stream.socket;
 
-      connections[stream.socket.uuid] = stream.socket;
-      pullStream
-        .pipe(pipeline)
-        .pipe(stream)
-    }
+    obj.pullStream
+      .pipe(pipeline)
+      .pipe(stream)
   }
 }
 
+function start(cfg){
+  // First some Plumbing...
+  let conf = _setup(cfg);
+  var connections = {};
+  let HTTPServer = _setupHTTPServer(conf.service);
+
+  let wsRemoteClient = websocket(conf.ws.client.wsUrl, {
+    perMessageDeflate: false
+  });
+
+  var wss = websocket.createServer({
+    server: HTTPServer,
+    path : `${conf.service.base_url}/subscribe`,
+    binary: false },
+    _setupSource({
+      pullStream : wsRemoteClient,
+      service: conf.service,
+      connections : connections
+    }))
+}
+
 module.exports = {
-  start: start,
-  setup: setup
+  start: start
 };

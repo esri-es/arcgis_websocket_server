@@ -1,11 +1,25 @@
 const testConnection = require("./utils/websocket_utils.js");
 const streamServer = require('./streamserver_simple.js');
 
-var CONFIG = streamServer.setup("twitter");
-testConnection(CONFIG.ws.client)
-  .then(payload => {
-    // Update service conf with payload retrieved from ws connection
-    CONFIG.service.fieldObj = JSON.parse(payload);
+const SERVICE_CONF = {
+  name : "twitter",
+  out_sr : {
+    wkid : 102100,
+    latestWkid : 3857
+  },
+  port : process.env["NGROK"] ? null : 9000,
+  host : process.env["NGROK"] || "localhost",
+  protocol : process.env["NGROK"] ? new URL(process.env["NGROK"]).protocol : "http"
+};
+
+var wsClientConn = process.argv[2];
+testConnection(wsClientConn)
+  .then(conf => {
+    let CONFIG = {
+      client : conf.client,
+      payload: conf.payload,
+      service : SERVICE_CONF
+    };
     // start StreamServer
     streamServer.start(CONFIG);
   })
