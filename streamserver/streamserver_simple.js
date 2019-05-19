@@ -7,7 +7,7 @@ const {streamValues} = require('stream-json/streamers/StreamValues');
 const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
-const streamServerFilter = require('./src/filter_utils.js');
+const streamServerFilter = require('./utils/filter_utils.js');
 const proj4 = require('proj4');
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
@@ -170,8 +170,6 @@ function _setupSource(obj) {
         if (data.value[latField] !== 0 && data.value[lonField] !== 0) {
           // Reprojection according to conf.
           let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[lonField],data.value[latField]])
-          data.value[latField] = lat;
-          data.value[lonField] = lon;
           let fixed = {
               geometry : {
                 x : lon, y : lat,

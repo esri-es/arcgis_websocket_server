@@ -1,5 +1,5 @@
 const testConnection = require("./utils/websocket_utils.js");
-const streamServer = require('./streamserver_simple.js');
+const streamServer = require('./streamserver/streamserver_simple.js');
 
 const SERVICE_CONF = {
   name : "twitter",
