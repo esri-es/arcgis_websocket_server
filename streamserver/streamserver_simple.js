@@ -168,9 +168,9 @@ function _setupSource(obj) {
       },
       data => {
 
-        if (data.value[latField] !== 0 && data.value[lonField] !== 0 && obj.geo !== null) {
+        if (data.value[obj.geo.lat] !== 0 && data.value[obj.geo.lon] !== 0 && obj.geo !== null) {
           // Reprojection according to conf.
-          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[obj.lon],data.value[obj.lat]])
+          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[obj.geo.lon],data.value[obj.geo.lat]])
           let fixed = {
               geometry : {
                 x : lon, y : lat,
