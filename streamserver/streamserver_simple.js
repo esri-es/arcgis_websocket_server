@@ -2,13 +2,10 @@ const websocket = require('websocket-stream');
 const http = require('http');
 const Router = require('router');
 const finalhandler = require('finalhandler');
-const {parser} = require('stream-json/Parser');
-const {streamValues} = require('stream-json/streamers/StreamValues');
 const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
-const streamServerFilter = require('./utils/filter_utils.js');
-const proj4 = require('proj4');
+const defaultPipeline = require('./pipelines/default.js');
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
 
@@ -120,16 +117,16 @@ function _setupHTTPServer(serviceConf){
 
 function _setupSource(obj) {
   //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
-
   return function handle(stream, request) {
+    var serverRef = this;
     stream.binary = false;
     stream.socket.uuid = uuidv4();
+    console.log(`client [${stream.socket.uuid}] connected`);
     stream.socket.challenge = false;
-    var filter = false;
     stream.on('data', function(buf){
       let data = buf.toString();
       console.log(`${data} from [${stream.socket.uuid}]`);
-      if (!obj.connections[stream.socket.uuid].challenge && _doChallenge()) {
+      if (!stream.socket.challenge && _doChallenge()) {
         // Challenge
         try {
           stream.write(JSON.stringify({
@@ -140,12 +137,11 @@ function _setupSource(obj) {
           console.log(`bad payload[${data}]`);
         }
         console.log("Challenge done!");
-        obj.connections[stream.socket.uuid].challenge = true;
+        stream.socket.challenge = true;
       } else {
         // Filters
         try{
-            obj.connections[stream.socket.uuid].filter = JSON.parse(data).filter.where;
-            filter = true;
+          stream.socket.filter = JSON.parse(data).filter.where;
         }catch(err){
             console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
         };
@@ -153,45 +149,25 @@ function _setupSource(obj) {
     });
     stream.on('close',function(){
       console.log(`client [${stream.socket.uuid}] disconnected`);
-      delete obj.connections[stream.socket.uuid];
-    })
+      serverRef.clients.delete(stream.socket);
+      stream.end();
+    });
 
     let pipeline = chain([
-      parser({jsonStreaming: true}),
-      streamValues(),
+      ...defaultPipeline({ geo : obj.geo, service : obj.service}),
       data => {
-          return filter
-            ? streamServerFilter(data.value,obj.connections[stream.socket.uuid].filter)
+          return stream.socket.hasOwnProperty("filter")
+            ? streamServerFilter(data.value,stream.socket.filter)
               ? data
               : null
             : data;
       },
-      data => {
-
-        if (data.value[obj.geo.lat] !== 0 && data.value[obj.geo.lon] !== 0 && obj.geo !== null) {
-          // Reprojection according to conf.
-          let [lon,lat] = proj4(proj4.defs(`EPSG:${obj.service.out_sr.latestWkid}`),[data.value[obj.geo.lon],data.value[obj.geo.lat]])
-          let fixed = {
-              geometry : {
-                x : lon, y : lat,
-                spatialReference : obj.service.out_sr
-              },
-              attributes : data.value
-          };
-          fixed.attributes.FltId = data.value.id_str;
-          data.value = fixed;
-
-          return data;
-        } else {
-          return null
-        }
-      },
-      data => {
-        return JSON.stringify(data.value)
-      }
+      data => JSON.stringify(data.value)
     ]);
 
-    obj.connections[stream.socket.uuid] = stream.socket;
+    pipeline.on("error", function(err){
+      console.error(err);
+    })
 
     obj.pullStream
       .pipe(pipeline)
@@ -211,13 +187,18 @@ function start(cfg){
   } else {
     console.log(`Found spatial information in fields [${lonField},${latField}]`);
   }
-  var connections = {};
-  let HTTPServer = _setupHTTPServer(conf.service);
 
+  let HTTPServer = _setupHTTPServer(conf.service);
   let wsRemoteClient = websocket(conf.ws.client.wsUrl, {
     perMessageDeflate: false
   });
 
+  var fieldGeo = avoidGeo
+    ? null
+    : {
+      lat : latField,
+      lon : lonField
+    };
 
   var wss = websocket.createServer({
     server: HTTPServer,
@@ -226,13 +207,7 @@ function start(cfg){
     _setupSource({
       pullStream : wsRemoteClient,
       service: conf.service,
-      connections : connections,
-      geo : avoidGeo
-        ? null
-        : {
-          lat : latField,
-          lon : lonField
-        }
+      geo : fieldGeo
     }))
 }
 
