@@ -19,6 +19,11 @@ function compose(ctx) {
   ];
   if (sanityCheck) {
     pipeline.push(..._injectCtx(CUSTOM_PIPELINE,ctx));
+  } else {
+    console.log(`Default Pipeline setup...[Skipping custom pipeline]`);
+    if (CUSTOM_PIPELINE.length > 0) {
+      console.warn(`Please review your custom pipeline`);
+    }
   }
 
   return pipeline;
