@@ -17,12 +17,13 @@ function compose(ctx) {
     parser({jsonStreaming: true}),
     streamValues()
   ];
-  if (sanityCheck) {
+  if (sanityCheck(CUSTOM_PIPELINE)) {
     pipeline.push(..._injectCtx(CUSTOM_PIPELINE,ctx));
   } else {
     console.log(`Default Pipeline setup...[Skipping custom pipeline]`);
     if (CUSTOM_PIPELINE.length > 0) {
-      console.warn(`Please review your custom pipeline`);
+      console.warn(`Something is wrong : Please review your custom pipeline`);
+      process.exit(12);
     }
   }
 
