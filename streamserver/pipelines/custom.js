@@ -27,7 +27,7 @@ data = {
 
 const proj4 = require('proj4');
 
-module.exports = ["caca" ,adaptPayload];
+module.exports = [adaptPayload];
 
 function adaptPayload (context) {
    return data => {
