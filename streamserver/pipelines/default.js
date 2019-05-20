@@ -7,12 +7,17 @@ function _injectCtx (arr,ctx) {
   return arr.map(fn => fn(ctx));
 }
 
+function sanityCheck(arr) {
+  let length = arr.length;
+  return Array.isArray(arr) && arr.filter(fn => typeof(fn) === "function").length === length;
+}
+
 function compose(ctx) {
   let pipeline = [
     parser({jsonStreaming: true}),
     streamValues()
   ];
-  if (CUSTOM_PIPELINE.length > 0) {
+  if (sanityCheck) {
     pipeline.push(..._injectCtx(CUSTOM_PIPELINE,ctx));
   }
 
