@@ -56,11 +56,13 @@
         ) {
 
             var map = new Map();
+
             var tileLayer = new VectorTileLayer({
                 url:
                     "https://jsapi.maps.arcgis.com/sharing/rest/content/items/75f4dfdff19e445395653121a95a85db/resources/styles/root.json"
                 }
             );
+
             map.add(tileLayer);
 
             var mapView = new MapView({
@@ -73,11 +75,38 @@
 
             var widget = new RealTimeLayerList({
                 url: "https://551500ab.ngrok.io/arcgis/rest/services/twitter/StreamServer",
-                mapView: mapView
+                mapView: mapView,
+                title: "Tweets: #PP, #PSOE, ... ",
+                renderer: {
+                    "type": "simple",
+                    "symbol": {
+                        "type": "picture-marker",
+                        "url": "https://static.arcgis.com/images/Symbols/Firefly/FireflyC2.png",
+                    }
+                },
+                filter: {
+                    where: "is_rt = 'false'"
+                },
+                popupTemplate: {
+                    // autocasts as new PopupTemplate()
+                    title: "@{username}",
+                    content: [{
+                        type: "text",
+                        text: `
+                            <p>
+                                <img src=\"{profile_image_url_https}\" style=\"float:left; margin:0 10px 10px 0;\">
+                                Mensaje: {text}
+                            </p>
+                            <p>
+                                is_rt: {is_rt}
+                            </p>
+                            <p>
+                                Desde: {location} (match: {match})
+                            </p>
+                        `
+                    }]
+                }
                 // container: <string>,
-                // title: <string|html>,
-                // template: <string|function>,
-                // definitionExpression: <string>,
                 // maxFeatures: <number>,
                 // onclick: {
                 //     pan: <true|false>,

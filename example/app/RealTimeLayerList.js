@@ -37,25 +37,26 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             _this.url = "https://geoeventsample1.esri.com:6443/arcgis/rest/services/LABus/StreamServer";
             _this.mapView = null;
             _this.messages = [''];
-            var streamLayer = new StreamLayer_1.default({
-                url: properties.url,
-                popupTemplate: {
-                    // autocasts as new PopupTemplate()
-                    title: "@{username} desde {location}",
-                    content: [
-                        {
-                            type: "text",
-                            text: "<img src=\"{profile_image_url_https}\"> Mensaje: {text}"
-                        }
-                    ]
-                }
-            });
+            _this.title = "";
+            var layerProp = {
+                url: properties.url
+            };
+            if (properties.filter) {
+                layerProp.filter = properties.filter;
+            }
+            if (properties.popupTemplate) {
+                layerProp.popupTemplate = properties.popupTemplate;
+            }
+            if (properties.renderer) {
+                layerProp.renderer = properties.renderer;
+            }
+            var streamLayer = new StreamLayer_1.default(layerProp);
             var that = _this;
             properties.mapView.map.add(streamLayer);
             properties.mapView.whenLayerView(streamLayer)
                 .then(function (streamLayerView) {
                 streamLayerView.on("data-received", function (elem) {
-                    console.log("elem=", elem);
+                    // console.log("elem=",elem)
                     // that.messages.push(elem);
                     var attr = elem.attributes;
                     var d = new Date(attr.created_at);
@@ -72,6 +73,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         }
         RealTimeLayerList.prototype.render = function () {
             return (widget_1.tsx("div", { class: "esri-real-time-layer-list" },
+                widget_1.tsx("p", null, this.title),
                 widget_1.tsx("ul", { id: "tweet-list" })));
         };
         RealTimeLayerList.prototype.formatDate = function (d) {
@@ -111,6 +113,10 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             decorators_1.property(),
             widget_1.renderable()
         ], RealTimeLayerList.prototype, "messages", void 0);
+        __decorate([
+            decorators_1.property(),
+            widget_1.renderable()
+        ], RealTimeLayerList.prototype, "title", void 0);
         RealTimeLayerList = __decorate([
             decorators_1.subclass("esri.widgets.RealTimeLayerList")
         ], RealTimeLayerList);

@@ -32,22 +32,36 @@ class RealTimeLayerList extends declared(Widget) {
     @renderable()
     messages: [string] = [''];
 
+    @property()
+    @renderable()
+    title: string = "";
+
+
+
     constructor(properties: any){
         super();
 
-        const streamLayer = new StreamLayer({
-            url: properties.url,
-            popupTemplate: {
-                // autocasts as new PopupTemplate()
-                title: "@{username} desde {location}",
-                content: [
-                  {
-                    type: "text",
-                    text: "<img src=\"{profile_image_url_https}\"> Mensaje: {text}"
-                  }
-                ]
-            }
-        });
+        interface LooseObject {
+            [key: string]: any
+        }
+
+        let layerProp: LooseObject = {
+            url: properties.url
+        }
+
+        if(properties.filter){
+            layerProp.filter = properties.filter;
+        }
+
+        if(properties.popupTemplate){
+            layerProp.popupTemplate = properties.popupTemplate;
+        }
+
+        if(properties.renderer){
+            layerProp.renderer = properties.renderer;
+        }
+
+        const streamLayer = new StreamLayer(layerProp);
 
         const that = this;
 
@@ -57,7 +71,7 @@ class RealTimeLayerList extends declared(Widget) {
         properties.mapView.whenLayerView(streamLayer)
             .then(function(streamLayerView: StreamLayerView) {
                 streamLayerView.on("data-received", function(elem: any){
-                    console.log("elem=",elem)
+                    // console.log("elem=",elem)
                     // that.messages.push(elem);
 
                     var attr = elem.attributes;
@@ -98,6 +112,7 @@ class RealTimeLayerList extends declared(Widget) {
     render() {
         return (
             <div class="esri-real-time-layer-list">
+                <p>{this.title}</p>
                 <ul id="tweet-list"></ul>
             </div>
         );
