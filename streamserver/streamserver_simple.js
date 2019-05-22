@@ -123,6 +123,8 @@ function _setupSource(obj) {
     stream.socket.uuid = uuidv4();
     console.log(`client [${stream.socket.uuid}] connected`);
     stream.socket.challenge = false;
+    var pipeline;
+
     stream.on('data', function(buf){
       let data = buf.toString();
       console.log(`${data} from [${stream.socket.uuid}]`);
@@ -138,6 +140,26 @@ function _setupSource(obj) {
         }
         console.log("Challenge done!");
         stream.socket.challenge = true;
+        pipeline = chain([
+          ...defaultPipeline({ geo : obj.geo, service : obj.service}),
+          data => {
+              return stream.socket.hasOwnProperty("filter")
+                ? streamServerFilter(data.value,stream.socket.filter)
+                  ? data
+                  : null
+                : data;
+          },
+          data => JSON.stringify(data.value)
+        ]);
+
+        pipeline.on("error", function(err){
+          console.error(err);
+        })
+
+        obj.pullStream
+          .pipe(pipeline)
+          .pipe(stream)
+
       } else {
         // Filters
         try{
@@ -150,28 +172,12 @@ function _setupSource(obj) {
     stream.on('close',function(){
       console.log(`client [${stream.socket.uuid}] disconnected`);
       serverRef.clients.delete(stream.socket);
-      stream.end();
+      pipeline.unpipe();
+      pipeline.destroy();
+
     });
 
-    let pipeline = chain([
-      ...defaultPipeline({ geo : obj.geo, service : obj.service}),
-      data => {
-          return stream.socket.hasOwnProperty("filter")
-            ? streamServerFilter(data.value,stream.socket.filter)
-              ? data
-              : null
-            : data;
-      },
-      data => JSON.stringify(data.value)
-    ]);
 
-    pipeline.on("error", function(err){
-      console.error(err);
-    })
-
-    obj.pullStream
-      .pipe(pipeline)
-      .pipe(stream)
   }
 }
 
