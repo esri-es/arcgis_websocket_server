@@ -62,6 +62,7 @@ body {
     flex-wrap: wrap;
     overflow: auto;
     padding: 1rem;
+    align-items: flex-start;
 }
 #graphDiv > div{
     width: 150px;
