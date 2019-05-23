@@ -43,7 +43,7 @@ require([
         //  mapView: mapView,
         container: "widgetDiv",
         layer: {
-            url: "https://551500ab.ngrok.io/arcgis/rest/services/twitter/StreamServer",
+            url: "https://80b04449.ngrok.io/arcgis/rest/services/twitter/StreamServer",
             renderer: {
                 "type": "simple",
                 "symbol": {

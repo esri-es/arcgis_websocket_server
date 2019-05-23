@@ -6,17 +6,12 @@ const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
 const defaultPipeline = require('./pipelines/default.js');
-const streamServerFilter = require('./utils/filter_utils.js');
-
+const electionsStream = require('twitter-elections');
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
 
-function _shouldChallenge(origin) {
-  return !/arcgis\.com/.test(origin) || !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
-}
-
-function _isFilterChallenge(obj) {
-    return obj.hasOwnProperty("filter") && obj.filter.hasOwnProperty("outFields");
+function _doChallenge() {
+  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
 }
 
 function _updateServiceInfo(obj) {
@@ -124,74 +119,60 @@ function _setupHTTPServer(serviceConf){
 function _setupSource(obj) {
   //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
   return function handle(stream, request) {
-    console.log(request.headers.origin);
     var serverRef = this;
     stream.binary = false;
     stream.socket.uuid = uuidv4();
-    stream.socket.challenge = _shouldChallenge(request.headers.origin);
     console.log(`client [${stream.socket.uuid}] connected`);
-    var pipeline;
-
+    stream.socket.challenge = false;
     stream.on('data', function(buf){
       let data = buf.toString();
       console.log(`${data} from [${stream.socket.uuid}]`);
-      try {
-        let clientMessage = JSON.parse(data);
-        if(_shouldChallenge(request.headers.origin) && _isFilterChallenge(clientMessage)){
-          console.log(`Received challenge filter from [${stream.socket}]`);
-
+      if (!stream.socket.challenge && _doChallenge()) {
+        // Challenge
+        try {
           stream.write(JSON.stringify({
             error: null,
-            ...clientMessage
+            ...JSON.parse(data)
           }));
-          console.log("Challenge done!");
-          if (clientMessage.filter.hasOwnProperty("where") && clientMessage.filter.where.length > 0) {
-            stream.socket.filter = clientMessage.filter.where;
-          }
-        } else {
-          // Filters
-          stream.socket.filter = clientMessage.filter.where;
+        } catch(err) {
+          console.log(`bad payload[${data}]`);
         }
-
-      } catch(err) {
-        console.log(`bad payload[${data}]`);
+        console.log("Challenge done!");
+        stream.socket.challenge = true;
+      } else {
+        // Filters
+        try{
+          stream.socket.filter = JSON.parse(data).filter.where;
+        }catch(err){
+            console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
+        };
       }
-
-      pipeline = chain([
-        ...defaultPipeline({ geo : obj.geo, service : obj.service}),
-        data => {
-          return stream.socket.challenge ? data : null
-        },
-        data => {
-          console.log(`pipeline - filter : [${stream.socket.hasOwnProperty("filter") ? "ON" : "OFF"}]`);
-          return stream.socket.hasOwnProperty("filter")
-            ? streamServerFilter(data.value.attributes,stream.socket.filter)
-              ? data
-              : null
-            : data;
-        },
-        data => JSON.stringify(data.value)
-      ]);
-
-      pipeline.on("error", function(err){
-        console.error(err);
-      })
-
-      obj.pullStream
-        .pipe(pipeline)
-        .pipe(stream)
-
     });
     stream.on('close',function(){
       console.log(`client [${stream.socket.uuid}] disconnected`);
       serverRef.clients.delete(stream.socket);
-      if(pipeline) {
-        pipeline.unpipe();
-        pipeline.destroy();
-      }
+      stream.end();
     });
 
+    let pipeline = chain([
+      ...defaultPipeline({ geo : obj.geo, service : obj.service}),
+      data => {
+          return stream.socket.hasOwnProperty("filter")
+            ? streamServerFilter(data.value,stream.socket.filter)
+              ? data
+              : null
+            : data;
+      },
+      data => JSON.stringify(data.value)
+    ]);
 
+    pipeline.on("error", function(err){
+      console.error(err);
+    })
+
+    obj.pullStream
+      .pipe(pipeline)
+      .pipe(stream)
   }
 }
 
@@ -209,9 +190,7 @@ function start(cfg){
   }
 
   let HTTPServer = _setupHTTPServer(conf.service);
-  let wsRemoteClient = websocket(conf.ws.client.wsUrl, {
-    perMessageDeflate: false
-  });
+
 
   var fieldGeo = avoidGeo
     ? null
@@ -225,7 +204,18 @@ function start(cfg){
     path : `${conf.service.base_url}/subscribe`,
     binary: false },
     _setupSource({
-      pullStream : wsRemoteClient,
+      pullStream : electionsStream.start({
+        ws : {
+          host : "localhost",
+          port : 8888,
+          protocol : "ws"
+        },
+        twitter : {
+          track : "PP,PSOE,CIUDADANOS,VOX,PODEMOS",
+          credentials : require('./config/twitter_credentials.json')
+        },
+        geocoders : ["arcgis","osm"]
+      }),
       service: conf.service,
       geo : fieldGeo
     }))
