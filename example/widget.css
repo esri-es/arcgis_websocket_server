@@ -1,0 +1,95 @@
+.esri-real-time-layer-list{
+    padding: 10px;
+    background: #fff;
+    /* max-height: 400px; */
+    max-width: 400px;
+    /* display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: column wrap;
+    flex-flow: column wrap; */
+}
+
+.flex-item {
+    -webkit-flex: 1 0 auto;
+    flex: 1 0 auto;
+}
+
+.esri-real-time-layer-list .header{
+    /* flex-grow: 1; */
+    padding: 10px;
+    height: 50px;
+}
+
+
+#tweet-list {
+    padding: 10px;
+    list-style: none;
+    overflow-y: auto;
+    margin: 0;
+    height: calc(100% - 50px);
+    /* flex-grow: 10; */
+}
+
+.tweets-container{
+
+}
+
+#tweet-list img {
+    float: left;
+}
+
+.tweet,
+.esriViewPopup {
+    margin-bottom: .5em;
+    border-bottom: 1px dotted #aaa;
+    padding-bottom: .5em;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.3em;
+    color: #666;
+}
+
+.tweet img,
+.esriViewPopup img {
+    float: left;
+    margin-right: 10px;
+    height: 37px;
+    border: 2px solid white;
+}
+
+.tweet .username,
+.esriViewPopup .username {
+    font-size: 1.15em;
+}
+
+.tweet .location,
+.tweet .rts,
+.tweet .favs,
+.esriViewPopup .location,
+.esriViewPopup .rts,
+.esriViewPopup .favs {
+    font-size: .85em;
+    margin-right: 10px;
+    color: #666;
+}
+
+.tweet .place {
+    font-size: 10px;
+}
+
+.tweet .text,
+.esriViewPopup .text {
+    display: block;
+    margin: 5px 0;
+    word-break: break-word;
+}
+
+.geolocate {
+    background-color: #00aced;
+    text-align: center;
+    color: white;
+    padding: .3em;
+    font-size: .9em;
+    margin-top: .5em;
+    cursor: pointer;
+}

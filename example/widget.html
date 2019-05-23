@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.11/esri/css/main.css">
+    <link rel="stylesheet" href="widget.css">
+    <title>RealTimeLayerList - 4.x</title>
+
+    <style>
+        html,
+        body{
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #fff;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        .flex-container{
+            display: -webkit-flex;
+            display: flex;
+        }
+        .container {
+            -webkit-flex-flow: row nowrap;
+            flex-flow: row nowrap;
+            align-items: stretch;
+            height: 100%;
+            /* position: relative; */
+        }
+
+        .flex-column{
+            flex-direction: column;
+        }
+
+        .container,
+        .flex-item {
+
+            /* position: absolute;<  */
+        }
+
+        .flex-item {
+            -webkit-flex: 1 0 auto;
+            flex: 1 0 auto;
+        }
+
+        .left-panel{
+            height: 100%;
+            width: 70%;
+        }
+        #viewDiv{
+            /* height: calc(100% - 250px); */
+            height: 50%;
+        }
+        #graphDiv{
+
+            display: flex;
+            height: 60px;
+            justify-content: flex-start;
+            /* align-items: flex-start; */
+            flex-wrap: wrap;
+            overflow: auto;
+            padding: 1rem;
+        }
+        #graphDiv > div{
+            width: 150px;
+        }
+
+        #widgetDiv{
+            width: 30%;
+            /* min-width: 400px; */
+            box-sizing: border-box;
+            padding: 0;
+        }
+    </style>
+
+    <script>
+        var base = location.href.split("/");
+            base.pop();
+            base = base.join("/");
+
+        window.dojoConfig = {
+            async: true,
+            isDebug: true,
+            packages: [
+                {
+                    name: "app",
+                    location: base + "/app"
+                },
+                {
+                    name: "node_modules",
+                    location: base + "/lib",
+                }
+            ]
+        };
+    </script>
+
+    <script src="https://js.arcgis.com/4.11/"></script>
+
+    <script>
+
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/VectorTileLayer",
+            "app/RealTimeLayerList"
+        ],function(
+            Map,
+            MapView,
+            VectorTileLayer,
+            RealTimeLayerList
+        ) {
+
+            var map = new Map();
+
+            var tileLayer = new VectorTileLayer({
+                url:
+                    "https://jsapi.maps.arcgis.com/sharing/rest/content/items/75f4dfdff19e445395653121a95a85db/resources/styles/root.json"
+                }
+            );
+
+            map.add(tileLayer);
+
+            var mapView = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [ -3, 40 ],
+                zoom: 5
+            });
+
+
+            var widget = new RealTimeLayerList({
+                mapView: mapView,
+                container: "widgetDiv",
+                layer: {
+                    url: "https://551500ab.ngrok.io/arcgis/rest/services/twitter/StreamServer",
+                    renderer: {
+                        "type": "simple",
+                        "symbol": {
+                            "type": "picture-marker",
+                            "url": "https://static.arcgis.com/images/Symbols/Firefly/FireflyC2.png",
+                        }
+                    },
+                    filter: {
+                        where: "is_rt = 'false'"
+                    },
+                    popupTemplate: {
+                        title: "@{username}",
+                        content: [{
+                            type: "text",
+                            text: `
+                                <p>
+                                    <img src=\"{profile_image_url_https}\" style=\"float:left; margin:0 10px 10px 0;\">
+                                    Mensaje: {text}
+                                </p>
+                                <p>
+                                    is_rt: {is_rt}
+                                </p>
+                                <p>
+                                    Desde: {location} (match: {match})
+                                </p>
+                            `
+                        }]
+                    }
+                },
+                aggregationLayers: [{
+                    title: "Comunidades Autónomas",
+                    url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/ArcGIS/rest/services/CCAA_wgs1984_wm/FeatureServer/0"
+                }/*,{
+                    title: "Provincias",
+                    url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/arcgis/rest/services/Prov/FeatureServer/0"
+                }*/],
+                panel: {
+                    title: "Tweets: #PP, #PSOE, ... ",
+                    // container: <string>,
+                    // maxFeatures: <number>,
+                    // filters: [
+                    //    label: <whereClause>
+                    // ],
+                    // onclick: {
+                    //     pan: <true|false>,
+                    //     zoom: <true|false>,
+                    //     ...
+                    // }
+                }
+            });
+
+            // mapView.ui.add(widget, {
+            //     position: "top-right"
+            // });
+        }
+        );
+    </script>
+</head>
+
+<body>
+    <div class="container flex-container">
+        <div class="flex-container flex-column left-panel">
+                <div id="viewDiv" class="flex-item"></div>
+                <div id="graphDiv" class="flex-item"></div>
+        </div>
+        <div id="widgetDiv" class="flex-item"></div>
+    </div>
+</body>
+</html>

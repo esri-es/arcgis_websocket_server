@@ -1,0 +1,220 @@
+<html>
+<head>
+    <!-- Styles -->
+
+</head>
+<body>
+    <div id="graph-container" class="flex-container">
+    </div>
+
+
+    <!-- Styles -->
+    <style>
+
+        .flex-container{
+            display: flex;
+            height: 120px;
+            justify-content: flex-start;
+            align-items: flex-start;
+            flex-wrap: wrap;
+
+        }
+        .flex-item{
+            -webkit-flex: 1 auto;
+            flex: 1 auto;
+        }
+
+    </style>
+
+    <!-- Resources -->
+    <script src="https://www.amcharts.com/lib/4/core.js"></script>
+    <script src="https://www.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+
+
+    <!-- Chart code -->
+    <script>
+        var chart;
+        var pieSeries;
+        var ccaas = [
+            "Andalucia", "Madrid", "Cataluña", "Galicia", "Murcia", "Castilla la Mancha",
+            "Castilla y León", "Canarias", "Islas Baleares", "Cantabria", "País Vasco", "Navarra",
+            "Baleares", "La Rioja", "Extremadura", "Valencia", "Aragón", "Andorra"
+        ];
+        var partidos = ["PSOE", "PP", "Ciudadanos", "Podemos", "Vox"];
+        var graphs = [];
+        ccaas.forEach(ccaa => {
+            var obj = {};
+            var data = [];
+            partidos.forEach(partido => {
+                data.push({
+                    "partido": partido,
+                    "tweets": getRandomInt(0, 500),
+                    "ccaa": ccaa
+                });
+            })
+            graphs.push({
+                "ccaa": ccaa,
+                "data": data
+            });
+        });
+        // graphs = [{
+        //     ccaa:"Andalucia",
+        //     data: [
+        //         {
+        //             partido: "PSOE",
+        //             tweets: 123123,
+        //         },{
+        //             partido: "PSOE",
+        //             tweets: 123123,
+        //         }
+        //         ..
+        //     ]
+        // }]
+
+        var containerEl = document.getElementById("graph-container");
+        am4core.ready(function() {
+
+            graphs.forEach((elem, i) => {
+                var el = document.createElement('div');
+                el.setAttribute("id", `chartdiv${i}`);
+                el.className = "flex-item";
+                containerEl.appendChild(el);
+                elem.graph = displayChart(`chartdiv${i}`, elem.ccaa, elem.data);
+            });
+        }); // end am4core.ready()
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+/*
+        updateChart(madrid, [{
+                "country": "PSOE",
+                "litres": 185.8,
+                "fill": "red"
+            },{
+                "country": "PP",
+                "litres": 40,
+                "fill": "blue"
+            },{
+                "country": "Ciudadanos",
+                "litres": 13
+            }, {
+                "country": "Podemos",
+                "litres": 35.9
+            }, {
+                "country": "Vox",
+                "litres": 38.3
+            }])
+            */
+
+
+        function displayChart(domId,chartTitle, data){
+            // Themes begin
+            am4core.useTheme(am4themes_animated);
+
+            // Themes end
+
+            // Create chart instance
+            chart = am4core.create(domId, am4charts.PieChart);
+
+            var title = chart.titles.create();
+            title.text = chartTitle;
+            title.fontSize = 15;
+            title.marginBottom = 0;
+
+            // Add and configure Series
+            pieSeries = chart.series.push(new am4charts.PieSeries());
+            pieSeries.dataFields.value = "tweets";
+            pieSeries.dataFields.category = "partido";
+
+            var colorSet = new am4core.ColorSet();
+
+            // PSOE: #F80100
+            // PP: #009ED9
+            // Ciudadanos: #EA8223
+            // Podemos: #682A53
+            // Vox #57BB33
+            colorSet.list = ["#F80100", "#009ED9", "#EA8223", "#682A53", "#57BB33"].map(function(color) {
+                return new am4core.color(color);
+            });
+            pieSeries.colors = colorSet;
+
+            // Let's cut a hole in our Pie chart the size of 30% the radius
+            chart.innerRadius = am4core.percent(30);
+
+            // Put a thick white border around each Slice
+            pieSeries.slices.template.stroke = am4core.color("#fff");
+            pieSeries.slices.template.strokeWidth = 2;
+            pieSeries.slices.template.strokeOpacity = 1;
+            // change the cursor on hover to make it apparent the object can be interacted with
+            pieSeries.slices.template.cursorOverStyle = [
+                {
+                    "property": "cursor",
+                    "value": "pointer"
+                }
+            ];
+
+            // pieSeries.alignLabels = false;
+            // // pieSeries.labels.template.bent = true;
+            // // pieSeries.labels.template.radius = 2;
+            // // pieSeries.labels.template.padding(0,0,0,0);
+            pieSeries.ticks.template.disabled = true;
+            pieSeries.alignLabels = false;
+            pieSeries.labels.template.text = ""//"{value}";
+            // pieSeries.labels.template.radius = am4core.percent(-40);
+            // pieSeries.labels.template.fill = am4core.color("white");
+
+            pieSeries.slices.template.events.on("down", function(ev) {
+            var series = ev.target.dataItem.component;
+            console.log("something happened ", ev);
+            console.log(`ev.target.dataItem.dataContext = ${JSON.stringify(ev.target.dataItem.dataContext)}`);
+            series.slices.each(function(item) {
+                if (item.isActive && item != ev.target) {
+                item.isActive = false;
+                }
+            })
+            });
+
+            chart.events.on("datavalidated", function () {
+                console.log("Data validated")
+            });
+
+            // pieSeries.slices.template.events.onAll(function(ev) {
+            //  console.log("something happened ", ev);
+            // }, this);
+
+            // pieSeries.ticks.template.disabled = true;
+
+            // Create a base filter effect (as if it's not there) for the hover to return to
+            var shadow = pieSeries.slices.template.filters.push(new am4core.DropShadowFilter);
+            shadow.opacity = 0;
+
+            // Create hover state
+            var hoverState = pieSeries.slices.template.states.getKey("hover"); // normally we have to create the hover state, in this case it already exists
+
+            // Slightly shift the shadow and make it more prominent on hover
+            var hoverShadow = hoverState.filters.push(new am4core.DropShadowFilter);
+            hoverShadow.opacity = 0.7;
+            hoverShadow.blur = 5;
+
+            // Add a legend
+            // chart.legend = new am4charts.Legend();
+
+            chart.data = data;
+
+            return chart;
+
+        }
+
+        function updateChart(chart, data){
+            chart.data = data;
+            chart.validateData()
+        }
+        //chart.data[0].litres=700
+            //
+    </script>
+</body>
+</html>
