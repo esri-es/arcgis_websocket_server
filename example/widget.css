@@ -18,7 +18,8 @@
 .esri-real-time-layer-list .header{
     /* flex-grow: 1; */
     padding: 10px;
-    height: 50px;
+    height: 41px;
+    border-bottom: 3px solid #a9a9a9;
 }
 
 

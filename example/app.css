@@ -6,6 +6,12 @@ body{
     padding: 0;
 }
 
+.header input{
+    width: 93%;
+    padding: 10px;
+    font-size: .9rem;
+}
+
 body {
     background-color: #fff;
     overflow: hidden;

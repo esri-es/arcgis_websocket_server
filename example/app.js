@@ -123,42 +123,8 @@ require([
             .execute(params)
             .then(response => {
                 // console.log("Response: ", response);
-
-                let containerEl = document.getElementById("graphDiv");
                 // Set counters to 0
-                response.features.forEach((elem, i) => {
-                    elem.counters = {
-                        tweets: 0,
-                        parties:[{
-                                "partido": "PSOE",
-                                "tweets": 0,
-                                "ccaa": i//elem.attributes.OBJECTID
-                            },{
-                                "partido": "PP",
-                                "tweets": 0,
-                                "ccaa": i//elem.attributes.OBJECTID
-                            },{
-                                "partido": "Ciudadanos",
-                                "tweets": 0,
-                                "ccaa": i//elem.attributes.OBJECTID
-                            },{
-                                "partido": "Podemos",
-                                "tweets": 0,
-                                "ccaa": i//elem.attributes.OBJECTID
-                            },{
-                                "partido": "Vox",
-                                "tweets": 0,
-                                "ccaa": i//elem.attributes.OBJECTID
-                            }
-                        ]
-                    }
-                    var el = document.createElement('div');
-                    el.setAttribute("id", `chartDiv${i}`);
-                    el.className = "flex-item";
-                    el.style.display = "none";
-                    containerEl.appendChild(el);
-                    elem.graph = $MY.displayChart(`chartDiv${i}`, elem.attributes.Nombre, elem.counters.parties);
-                });
+                response.features.forEach($MY.initPieCharts);
 
                 // Add response to property: aggregationLayers
                 config.aggregationLayers[index].response = response;
@@ -170,8 +136,6 @@ require([
     }
 
     $MY.streamLayer = new StreamLayer(config.layer);
-
-    const that = this;
 
     mapView.map.add($MY.streamLayer);
 
@@ -185,6 +149,26 @@ require([
     mapView.whenLayerView($MY.streamLayer)
         .then(function(streamLayerView) {
 
+            var ele = document.getElementById('inputFilter');
+            var callback = function(e){
+                $MY.streamLayer.definitionExpression = document.querySelectorAll('#inputFilter input')[0].value;
+                document.getElementById('tweet-list').innerHTML = '';
+                document.getElementById('graphDiv').innerHTML = '';
+                $MY.aggregationLayers[0].response.features.forEach($MY.initPieCharts);
+                setTimeout(function(){
+                    $MY.streamLayerView.on("data-received", function(elem){});
+                    console.log("Bugfix on data-received")
+                },1000)
+                e.preventDefault();
+                return false;
+            }
+            if(ele.addEventListener){
+                ele.addEventListener("submit", callback, false);  //Modern browsers
+            }else if(ele.attachEvent){
+                ele.attachEvent('onsubmit', callback);            //Old IE
+            }
+
+            $MY.streamLayerView = streamLayerView;
             streamLayerView.on("data-received", function(elem){
                 // console.log("elem=",elem)
 
@@ -371,5 +355,41 @@ require([
 
         return chart;
 
+    }
+
+    $MY.initPieCharts = (elem, i) => {
+
+        let containerEl = document.getElementById("graphDiv");
+        elem.counters = {
+            tweets: 0,
+            parties:[{
+                    "partido": "PSOE",
+                    "tweets": 0,
+                    "ccaa": i//elem.attributes.OBJECTID
+                },{
+                    "partido": "PP",
+                    "tweets": 0,
+                    "ccaa": i//elem.attributes.OBJECTID
+                },{
+                    "partido": "Ciudadanos",
+                    "tweets": 0,
+                    "ccaa": i//elem.attributes.OBJECTID
+                },{
+                    "partido": "Podemos",
+                    "tweets": 0,
+                    "ccaa": i//elem.attributes.OBJECTID
+                },{
+                    "partido": "Vox",
+                    "tweets": 0,
+                    "ccaa": i//elem.attributes.OBJECTID
+                }
+            ]
+        }
+        var el = document.createElement('div');
+        el.setAttribute("id", `chartDiv${i}`);
+        el.className = "flex-item";
+        el.style.display = "none";
+        containerEl.appendChild(el);
+        elem.graph = $MY.displayChart(`chartDiv${i}`, elem.attributes.Nombre, elem.counters.parties);
     }
 });
