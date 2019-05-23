@@ -11,12 +11,12 @@ const streamServerFilter = require('./utils/filter_utils.js');
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
 
-function _doChallenge() {
-  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
+function _shouldChallenge(origin) {
+  return !/arcgis\.com/.test(origin) || !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
 }
 
 function _isFilterChallenge(obj) {
-    return !obj.hasOwnProperty("filter");
+    return obj.hasOwnProperty("filter") && obj.filter.hasOwnProperty("outFields");
 }
 
 function _updateServiceInfo(obj) {
@@ -124,9 +124,11 @@ function _setupHTTPServer(serviceConf){
 function _setupSource(obj) {
   //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
   return function handle(stream, request) {
+    console.log(request.headers.origin);
     var serverRef = this;
     stream.binary = false;
     stream.socket.uuid = uuidv4();
+    stream.socket.challenge = _shouldChallenge(request.headers.origin);
     console.log(`client [${stream.socket.uuid}] connected`);
     var pipeline;
 
@@ -135,13 +137,14 @@ function _setupSource(obj) {
       console.log(`${data} from [${stream.socket.uuid}]`);
       try {
         let clientMessage = JSON.parse(data);
-        if(_isFilterChallenge(clientMessage)){
+        if(_shouldChallenge(request.headers.origin) && _isFilterChallenge(clientMessage)){
           console.log(`Received challenge filter from [${stream.socket}]`);
           stream.write(JSON.stringify({
             error: null,
             ...clientMessage
           }));
           console.log("Challenge done!");
+
         } else {
           // Filters
           stream.socket.filter = clientMessage.filter.where;
@@ -153,6 +156,9 @@ function _setupSource(obj) {
 
       pipeline = chain([
         ...defaultPipeline({ geo : obj.geo, service : obj.service}),
+        data => {
+          return stream.socket.challenge ? data : null
+        },
         data => {
           console.log(`pipeline - filter : [${stream.socket.hasOwnProperty("filter") ? "ON" : "OFF"}]`);
           return stream.socket.hasOwnProperty("filter")
