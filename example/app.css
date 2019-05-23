@@ -1,0 +1,69 @@
+html,
+body{
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #fff;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+.flex-container{
+    display: -webkit-flex;
+    display: flex;
+}
+.container {
+    -webkit-flex-flow: row nowrap;
+    flex-flow: row nowrap;
+    align-items: stretch;
+    height: 100%;
+    /* position: relative; */
+}
+
+.flex-column{
+    flex-direction: column;
+}
+
+.container,
+.flex-item {
+
+    /* position: absolute;<  */
+}
+
+.flex-item {
+    -webkit-flex: 1 0 auto;
+    flex: 1 0 auto;
+}
+
+.left-panel{
+    height: 100%;
+    width: 70%;
+}
+#viewDiv{
+    /* height: calc(100% - 250px); */
+    height: 50%;
+}
+#graphDiv{
+
+    display: flex;
+    height: 50%;
+    justify-content: flex-start;
+    /* align-items: flex-start; */
+    flex-wrap: wrap;
+    overflow: auto;
+    padding: 1rem;
+}
+#graphDiv > div{
+    width: 150px;
+}
+
+#widgetDiv{
+    width: 30%;
+    /* min-width: 400px; */
+    box-sizing: border-box;
+    padding: 0;
+}
