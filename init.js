@@ -12,6 +12,14 @@ const SERVICE_CONF = {
   protocol : process.env["NGROK"] ? "https" : "http"
 };
 
+process
+  .on('unhandledRejection', (reason, p) => {
+    console.error(reason, 'Unhandled Rejection at Promise', p);
+  })
+  .on('uncaughtException', err => {
+    console.error(err, 'Uncaught Exception thrown');
+  });
+
 var wsClientConn = process.argv[2];
 testConnection(wsClientConn)
   .then(conf => {
