@@ -1,15 +1,37 @@
 .esri-real-time-layer-list{
     padding: 10px;
     background: #fff;
-    max-height: 400px;
-    overflow: scroll;
+    /* max-height: 400px; */
     max-width: 400px;
+    /* display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: column wrap;
+    flex-flow: column wrap; */
 }
 
+.flex-item {
+    -webkit-flex: 1 0 auto;
+    flex: 1 0 auto;
+}
+
+.esri-real-time-layer-list .header{
+    /* flex-grow: 1; */
+    padding: 10px;
+    height: 50px;
+}
+
+
 #tweet-list {
+    padding: 10px;
     list-style: none;
+    overflow-y: auto;
     margin: 0;
-    padding: 0;
+    height: calc(100% - 50px);
+    /* flex-grow: 10; */
+}
+
+.tweets-container{
+
 }
 
 #tweet-list img {
