@@ -6,11 +6,17 @@ const {chain}  = require('stream-chain');
 const uuidv4 = require('uuid/v4');
 const esriTypes = require('./utils/esri_types.js');
 const defaultPipeline = require('./pipelines/default.js');
+const streamServerFilter = require('./utils/filter_utils.js');
+
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
 
-function _doChallenge() {
-  return !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
+function _shouldChallenge(origin) {
+  return !/arcgis\.com/.test(origin) || !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
+}
+
+function _isFilterChallenge(obj) {
+    return obj.hasOwnProperty("filter") && obj.filter.hasOwnProperty("outFields");
 }
 
 function _updateServiceInfo(obj) {
@@ -118,63 +124,68 @@ function _setupHTTPServer(serviceConf){
 function _setupSource(obj) {
   //console.log( `WS Server ready at [${conf.ws.client.wsUrl}/${BASE_URL}/subscribe]`);
   return function handle(stream, request) {
+    console.log(request.headers.origin);
     var serverRef = this;
     stream.binary = false;
     stream.socket.uuid = uuidv4();
+    stream.socket.challenge = _shouldChallenge(request.headers.origin);
     console.log(`client [${stream.socket.uuid}] connected`);
-    stream.socket.challenge = false;
     var pipeline;
 
     stream.on('data', function(buf){
       let data = buf.toString();
       console.log(`${data} from [${stream.socket.uuid}]`);
-      if (!stream.socket.challenge && _doChallenge()) {
-        // Challenge
-        try {
+      try {
+        let clientMessage = JSON.parse(data);
+        if(_shouldChallenge(request.headers.origin) && _isFilterChallenge(clientMessage)){
+          console.log(`Received challenge filter from [${stream.socket}]`);
           stream.write(JSON.stringify({
             error: null,
-            ...JSON.parse(data)
+            ...clientMessage
           }));
-        } catch(err) {
-          console.log(`bad payload[${data}]`);
+          console.log("Challenge done!");
+
+        } else {
+          // Filters
+          stream.socket.filter = clientMessage.filter.where;
         }
-        console.log("Challenge done!");
-        stream.socket.challenge = true;
-        pipeline = chain([
-          ...defaultPipeline({ geo : obj.geo, service : obj.service}),
-          data => {
-              return stream.socket.hasOwnProperty("filter")
-                ? streamServerFilter(data.value,stream.socket.filter)
-                  ? data
-                  : null
-                : data;
-          },
-          data => JSON.stringify(data.value)
-        ]);
 
-        pipeline.on("error", function(err){
-          console.error(err);
-        })
-
-        obj.pullStream
-          .pipe(pipeline)
-          .pipe(stream)
-
-      } else {
-        // Filters
-        try{
-          stream.socket.filter = JSON.parse(data).filter.where;
-        }catch(err){
-            console.log(`Invalid filter received from ${stream.socket.uuid}: ${data}`);
-        };
+      } catch(err) {
+        console.log(`bad payload[${data}]`);
       }
+
+      pipeline = chain([
+        ...defaultPipeline({ geo : obj.geo, service : obj.service}),
+        data => {
+          return stream.socket.challenge ? data : null
+        },
+        data => {
+          console.log(`pipeline - filter : [${stream.socket.hasOwnProperty("filter") ? "ON" : "OFF"}]`);
+          return stream.socket.hasOwnProperty("filter")
+            ? streamServerFilter(data.value.attributes,stream.socket.filter)
+              ? data
+              : null
+            : data;
+        },
+        data => JSON.stringify(data.value)
+      ]);
+
+      pipeline.on("error", function(err){
+        console.error(err);
+      })
+
+      obj.pullStream
+        .pipe(pipeline)
+        .pipe(stream)
+
     });
     stream.on('close',function(){
       console.log(`client [${stream.socket.uuid}] disconnected`);
       serverRef.clients.delete(stream.socket);
-      pipeline.unpipe();
-      pipeline.destroy();
-
+      if(pipeline) {
+        pipeline.unpipe();
+        pipeline.destroy();
+      }
     });
 
 

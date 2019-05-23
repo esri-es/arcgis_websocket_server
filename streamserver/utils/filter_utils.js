@@ -6,6 +6,7 @@ var str = `(ciudadanos = '1') AND (ciudadanos <> '1') AND (ciudadanos LIKE '1%')
 const util = require("util");
 
 function buildQuery(field, op, value) {
+  console.log(`Query Parsed : [${field} ${op} ${value}]`);
   return `(${field} ${op} ${value})`;
 }
 
@@ -83,14 +84,19 @@ function translate (d,arr) {
 
 
 function evaluateQuery(d, queryStr) {
-     let operatorChain = queryStr.split(/[^(AND|OR)]/).filter(el => /(AND|OR)/.test(el));
-     var lista = queryStr.split(reOpsExt)
-      .map(exp => exp.replace(/(\(|\))/g,""))
-      .filter(el => !/(AND|OR)/.test(el.replace(/"/g, "")))
-      .map(exp => exp.split(/(NOT LIKE|LIKE|IS NOT|IS|NOT CONTAINS|CONTAINS|=|<>)/))
-      .map(exp => exp.map(el => el.trim().replace("%","")))
-      .map(exp => translate(d,exp));
+  // console.log(queryStr);
+  // console.log({
+  //   text : d.text,
+  //   ciudadanos : d.ciudadanos
+  // });
 
+   let operatorChain = queryStr.split(/[^(AND|OR)]/).filter(el => /(AND|OR)/.test(el));
+   var lista = queryStr.split(reOpsExt)
+    .map(exp => exp.replace(/(\(|\))/g,""))
+    .filter(el => !/(AND|OR)/.test(el.replace(/"/g, "")))
+    .map(exp => exp.split(/(NOT LIKE|LIKE|IS NOT|IS|NOT CONTAINS|CONTAINS|=|<>)/))
+    .map(exp => exp.map(el => el.trim().replace("%","")))
+    .map(exp => translate(d,exp));
 
    let result = lista.length === 1
      ? lista[0]
@@ -107,7 +113,9 @@ function evaluateQuery(d, queryStr) {
        }
     },true);
 
+    console.log(`Result : ${result}`);
     //console.log(`data : [${util.inspect(d, { compact: true, depth: 5, breakLength: 80 })}]\nquery [${queryStr}] -> ${lista} -> ${result}` );
+
     return result;
 
 }
