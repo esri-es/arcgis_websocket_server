@@ -35,15 +35,25 @@ require([
         container: "viewDiv",
         map: map,
         center: [ -3, 40 ],
-        zoom: 5
+        zoom: 4
     });
+
+    // From sample:
+    // https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=popuptemplate-arcade
+    // Ideas: https://www.esri.com/arcgis-blog/products/arcgis-online/mapping/combining-arcade-and-html-for-a-real-life-pop-up-display/
+    var arcadeExpressionInfos = [
+        {
+          name: "linkify",
+          expression: document.getElementById("linkify").text
+        }
+    ];
 
     // OLD: var widget = new RealTimeLayerList(config)
     var config = {
-        //  mapView: mapView,
+        mapView: mapView,
         container: "widgetDiv",
         layer: {
-            url: "https://80b04449.ngrok.io/arcgis/rest/services/twitter/StreamServer",
+            url: "https://551500ab.ngrok.io/arcgis/rest/services/twitter/StreamServer",
             renderer: {
                 "type": "simple",
                 "symbol": {
@@ -51,24 +61,22 @@ require([
                     "url": "https://static.arcgis.com/images/Symbols/Firefly/FireflyC2.png",
                 }
             },
-            definitionExpression: "is_rt = 'false'",
+            // definitionExpression: "is_rt = 'false'",
             popupTemplate: {
                 title: "@{username}",
                 content: [{
                     type: "text",
                     text: `
-                        <p>
+                        <p style="font-size: .75rem;">
                             <img src=\"{profile_image_url_https}\" style=\"float:left; margin:0 10px 10px 0;\">
-                            Mensaje: {text}
+                            {text} {expression/linkify}
                         </p>
-                        <p>
-                            is_rt: {is_rt}
-                        </p>
-                        <p>
+                        <p style="font-size: .75rem;">
                             Desde: {location} (match: {match})
                         </p>
                     `
-                }]
+                }],
+                expressionInfos: arcadeExpressionInfos
             }
         },
         aggregationLayers: [{
@@ -167,8 +175,16 @@ require([
 
     mapView.map.add($MY.streamLayer);
 
+    $MY.streamLayer.on("layerview-create", function(view, layerView){
+        console.log(`layerview-create: ${view}`);
+    });
+    $MY.streamLayer.on("layerview-destroy", function(view, layerView){
+        console.log(`layerview-destroy: ${view}`);
+    });
+
     mapView.whenLayerView($MY.streamLayer)
         .then(function(streamLayerView) {
+
             streamLayerView.on("data-received", function(elem){
                 // console.log("elem=",elem)
 
@@ -186,14 +202,21 @@ require([
                 // Update counters
                 if(i < numCCAA){
                     ccaa.counters.tweets++;
-                    if(ccaa.counters.tweets == 1){
-                        document.getElementById(`chartDiv${i}`).style.display = "block";
-                    }
+
                     if(elem.attributes.psoe) ccaa.counters.parties[PARTY_INDEX.indexOf("PSOE")].tweets++;
                     if(elem.attributes.pp) ccaa.counters.parties[PARTY_INDEX.indexOf("PP")].tweets++;
                     if(elem.attributes.ciudadanos) ccaa.counters.parties[PARTY_INDEX.indexOf("Ciudadanos")].tweets++;
                     if(elem.attributes.podemos) ccaa.counters.parties[PARTY_INDEX.indexOf("Podemos")].tweets++;
                     if(elem.attributes.vox) ccaa.counters.parties[PARTY_INDEX.indexOf("Vox")].tweets++;
+
+                    if(document.getElementById(`chartDiv${i}`).style.display == "none"){
+                        if(ccaa.counters.parties.map(el => el.tweets).reduce((a,b) => a + b, 0) > 0){
+                            // Check if the sum of tweets for each party is > 0
+                            document.getElementById(`chartDiv${i}`).style.display = "block";
+                            // console.log(`Mostramos: ${ccaa.attributes.Nombre} con ${ccaa.counters.tweets} tweets // ${JSON.stringify(ccaa.counters.parties)}`)
+                        }
+                    }
+
 
                     // console.log(`${ccaa.attributes.Nombre}: ${JSON.stringify(ccaa.counters.parties)}`);
 

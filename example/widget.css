@@ -1,6 +1,7 @@
 .esri-real-time-layer-list{
-    padding: 10px;
+    padding: 0px;
     background: #fff;
+    height: 100%;
     /* max-height: 400px; */
     max-width: 400px;
     /* display: -webkit-flex;
