@@ -81,7 +81,8 @@ require([
         },
         aggregationLayers: [{
             title: "Comunidades Autónomas",
-            url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/ArcGIS/rest/services/CCAA_wgs1984_wm/FeatureServer/0"
+            // url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/ArcGIS/rest/services/CCAA_wgs1984_wm/FeatureServer/0"
+            url: "https://services3.arcgis.com/UlkXMDr5qa7NVX95/arcgis/rest/services/Spanish_CCAA_Boundaries_Simplified/FeatureServer/0"
         }/*,{
             title: "Provincias",
             url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/arcgis/rest/services/Prov/FeatureServer/0"
@@ -174,17 +175,17 @@ require([
 
                 var attr = elem.attributes;
                 var d = new Date(attr.created_at);
-                let i = 0, ccaa, res,
+                let i = attr.ccaa.index, ccaa,
                     numCCAA = $MY.aggregationLayers[0].response.features.length;
 
-                do{
-                    ccaa = $MY.aggregationLayers[0].response.features[i];
-                    res = geometryEngine.intersect(ccaa.geometry, elem.geometry);
-                    if(!res) i++;
-                }while(i < numCCAA && !res);
-
+                // do{
+                //     ccaa = $MY.aggregationLayers[0].response.features[i];
+                //     res = geometryEngine.intersect(ccaa.geometry, elem.geometry);
+                //     if(!res) i++;
+                // }while(i < numCCAA && !res);
                 // Update counters
                 if(i < numCCAA){
+                    ccaa = $MY.aggregationLayers[0].response.features[i];
                     ccaa.counters.tweets++;
 
                     if(elem.attributes.psoe) ccaa.counters.parties[PARTY_INDEX.indexOf("PSOE")].tweets++;
