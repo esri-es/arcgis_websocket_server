@@ -116,7 +116,7 @@
             window.counter.podemos.size,
             window.counter.vox.size,
           ]);
-        }, 2500);
+        }, 1000);
 
         setUpAppUI();
 
@@ -176,7 +176,7 @@
           type: 'pie',
           data: {
             datasets: [{
-                data : [20,20,20,20,20],
+                data : [0,0,0,0,0],
                 backgroundColor : ["#2196f3","#f44336","#ea8a0b","#9c27b0","#8bc34a"],
                 label : "Tweets"
             }],
@@ -189,13 +189,19 @@
             ]
           },
           options : {
-            responsive : true
+            responsive : true,
+            title: {
+              display: true,
+              text: 'Tweets'
+            }
           }
         });
 
         function updateChart(arr) {
           console.log(arr);
+          let total = arr.reduce((old,cur) => old+cur,0)
           chart.data.datasets[0].data = arr;
+          chart.options.title.text = `Tweets [${total}]`;
           chart.update();
           console.log(`Updated : ${chart.data.datasets[0].data}`);
         }
