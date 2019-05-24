@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1, maximum-scale=1,user-scalable=no"
+    />
+
+    <title>Query statistics by geometry - 4.11</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.11/esri/themes/light/main.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.11/dijit/themes/claro/claro.css"
+    />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        font-family: "Avenir Next W00", "Helvetica Neue", Helvetica, Arial,
+          sans-serif;
+      }
+
+      #chartPanel {
+        background: #fff;
+        font: "Avenir Next W00";
+        line-height: 1.5em;
+        overflow: auto;
+        padding: 10px;
+        width: 300px;
+        height: 300px;
+        display: block;
+      }
+
+      .chart {
+        height: 280px;
+      }
+    </style>
+
+    <!-- Load the Chart.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <script src="https://js.arcgis.com/4.11/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/geometry/geometryEngine",
+        "esri/widgets/Expand",
+        "esri/layers/StreamLayer"
+      ], function(
+        Map,
+        MapView,
+        FeatureLayer,
+        geometryEngine,
+        Expand,
+        StreamLayer
+      ) {
+        // App 'globals'
+        let chartExpand;
+
+        // const featureLayer = new FeatureLayer({
+        //   portalItem: {
+        //     id: "70db666baa5e4ee78092627a77d06707"
+        //   },
+        //   outFields: ["Nombre"]
+        // });
+
+        const streamLayer = new StreamLayer({
+          url: "http://localhost:9000/arcgis/rest/services/twitter/StreamServer",
+          purgeOptions: {
+            displayCount: 10000
+          }
+        });
+
+        // Create map
+        const map = new Map({
+          basemap: "dark-gray",
+          layers: [streamLayer]
+        });
+
+        // Create view
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 6,
+          center: [-4.033410164417723, 40.62277993555629]
+        });
+
+        var counter = {
+          pp : new Set(),
+          psoe: new Set(),
+          ciudadanos : new Set() ,
+          vox : new Set(),
+          podemos: new Set()
+        };
+
+        window.counter = counter;
+
+        window.setInterval(function(){
+          updateChart([
+            window.counter.pp.size,
+            window.counter.psoe.size,
+            window.counter.ciudadanos.size,
+            window.counter.podemos.size,
+            window.counter.vox.size,
+          ]);
+        }, 2500);
+
+        setUpAppUI();
+
+        function setUpAppUI() {
+
+          view.whenLayerView(streamLayer).then(function(layerView){
+            layerView.watch("updating", function(val){
+              if(!val){  // wait for the layer view to finish updating
+                layerView.queryFeatures().then(function(results){
+                  if (results.features.length > 0) {
+
+                   results.features
+                    .map(el => ({
+                        id : el.attributes.id_str,
+                        pp : el.attributes.pp,
+                        vox : el.attributes.vox,
+                        ciudadanos : el.attributes.ciudadanos,
+                        psoe : el.attributes.psoe,
+                        podemos : el.attributes.psoe
+                      }))
+                    .reduce((old,cur,i,arr) => {
+
+                        Object.keys(cur).forEach(k => {
+                          if (cur[k] === true) {
+                            window.counter[k].add(cur.id)
+                          }
+                        });
+                        return old;
+                    }, window.counter)
+
+                  }
+
+                });
+              }
+            });
+          });
+
+          view.when(function() {
+            // Display the chart in an Expand widget
+            chartExpand = new Expand({
+              expandIconClass: "esri-icon-chart",
+              expandTooltip: "Partidos Políticos",
+              expanded: false,
+              view: view,
+              content: document.getElementById("chartPanel")
+            });
+
+            view.ui.add(chartExpand, "top-right");
+          });
+
+        }
+
+        // Create an population pyramid chart for the census tracts that intersect the buffer polygon
+        // Chart is created using the Chart.js library
+        const canvasElement = document.getElementById("chart");
+        var chart = new Chart(canvasElement.getContext("2d"), {
+          type: 'pie',
+          data: {
+            datasets: [{
+                data : [20,20,20,20,20],
+                backgroundColor : ["#2196f3","#f44336","#ea8a0b","#9c27b0","#8bc34a"],
+                label : "Tweets"
+            }],
+            labels : [
+              "PP",
+              "PSOE",
+              "Ciudadanos",
+              "Unidas Podemos",
+              "Vox"
+            ]
+          },
+          options : {
+            responsive : true
+          }
+        });
+
+        function updateChart(arr) {
+          console.log(arr);
+          chart.data.datasets[0].data = arr;
+          chart.update();
+          console.log(`Updated : ${chart.data.datasets[0].data}`);
+        }
+
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="chartPanel"><canvas id="chart" class="chart"></canvas></div>
+  </body>
+</html>
