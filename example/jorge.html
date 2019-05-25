@@ -201,11 +201,15 @@
 
           view.when(function() {
 
+            var filterSelect = document.createElement("select");
+
+            // Todo : Build a list with filters
+            var fieldList = streamLayer.fields.map(el => ({name : el.name, type : el.type}) )
+            console.table(fieldList);
+
             var filterBtn = document.createElement('button');
             filterBtn.addEventListener("click", btnFn);
             filterBtn.innerHTML = "Filtrar";
-
-
 
             function btnFn(evt){
               window.app.streamLayer.definitionExpression = "pp = 'true'";
