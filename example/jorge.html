@@ -2,21 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1, maximum-scale=1,user-scalable=no"
-    />
-
-    <title>Query statistics by geometry - 4.11</title>
-
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.11/esri/themes/light/main.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.11/dijit/themes/claro/claro.css"
-    />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Elecciones</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.11/esri/themes/light/main.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.11/dijit/themes/claro/claro.css"/>
 
     <style>
       html,
@@ -56,24 +45,16 @@
       require([
         "esri/Map",
         "esri/views/MapView",
-        "esri/layers/FeatureLayer",
         "esri/geometry/geometryEngine",
         "esri/widgets/Expand",
         "esri/layers/StreamLayer"
-      ], function(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer){
-        window.app = init(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer);
+      ], function(Map,MapView,geometryEngine,Expand,StreamLayer){
+        window.app = init(Map,MapView,geometryEngine,Expand,StreamLayer);
       });
 
-      function init(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer) {
+      function init(Map,MapView,geometryEngine,Expand,StreamLayer) {
         // App 'globals'
         let chartExpand;
-
-        // const featureLayer = new FeatureLayer({
-        //   portalItem: {
-        //     id: "70db666baa5e4ee78092627a77d06707"
-        //   },
-        //   outFields: ["Nombre"]
-        // });
 
         const streamLayer = new StreamLayer({
           url: "http://localhost:9000/arcgis/rest/services/twitter/StreamServer",
@@ -119,6 +100,14 @@
           podemos: new Set()
         };
 
+        var partidos = [
+          "pp",
+          "psoe",
+          "ciudadanos",
+          "podemos",
+          "vox"
+        ];
+
         window.counter = counter;
 
         window.setInterval(function(){
@@ -133,10 +122,20 @@
 
 
         function tweetContent(obj){
+
+          let markText = obj.text;
+          if(obj.markWords.length > 0){
+            let reMarks = new RegExp(`(${obj.markWords.join("|")})`,"ig");
+            markText = obj.text.replace(reMarks, `<mark>$1</mark>`, "g");
+          }
+
           return `<div>
             <img src="${obj.profile_image_url_https}" />
-            <p>${obj.text}</p>
+            <p>${markText}</p>
             <a href="${obj.tweet_url}" target="_blank">Tweet</a>
+            <ul>
+              ${partidos.map(el => `<li>${el} : ${obj[el]}</li>`).join("")}
+            </ul>
           </div>`
         }
 
@@ -171,6 +170,7 @@
                 layerView.queryFeatures().then(function(results){
                   if (results.features.length > 0) {
                    results.features
+                    .filter(el => el.attributes.markWords.length > 0)
                     .map(el => ({
                         id : el.attributes.id_str,
                         pp : el.attributes.pp,
@@ -178,9 +178,8 @@
                         ciudadanos : el.attributes.ciudadanos,
                         psoe : el.attributes.psoe,
                         podemos : el.attributes.psoe,
-                        OBJECTID : el.attributes["__OBJECTID"]
+                        markWords : el.attributes.markWords
                       }))
-                    .filter(el => el.pp || el.vox || el.ciudadanos || el.psoe || el.podemos)
                     .reduce((old,cur,i,arr) => {
 
                         Object.keys(cur).forEach(k => {
@@ -214,13 +213,7 @@
 
         }
 
-        var partidos = [
-          "pp",
-          "psoe",
-          "ciudadanos",
-          "podemos",
-          "vox"
-        ];
+
         // Create an population pyramid chart for the census tracts that intersect the buffer polygon
         // Chart is created using the Chart.js library
         const canvasElement = document.getElementById("chart");
