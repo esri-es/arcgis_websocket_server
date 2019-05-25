@@ -121,16 +121,19 @@
         }, 1000);
 
 
-        function tweetContent(obj){
 
+        function tweetContent(obj){
           let markText = obj.text;
           if(obj.markWords.length > 0){
             let reMarks = new RegExp(`(${obj.markWords.join("|")})`,"ig");
-            markText = obj.text.replace(reMarks, `<mark>$1</mark>`, "g");
+            markText = obj.text.replace(reMarks, `<mark>$1</mark>`, "gi");
           }
 
           return `<div>
             <img src="${obj.profile_image_url_https}" />
+            <p>${obj.markWords.join(",")}</p>
+            <p><b>Match:</b>${obj.match}</p>
+            <p><b>Location:</b>${obj.location}</p>
             <p>${markText}</p>
             <a href="${obj.tweet_url}" target="_blank">Tweet</a>
             <ul>
@@ -164,7 +167,6 @@
 
         function setUpAppUI() {
           view.whenLayerView(streamLayer).then(function(layerView){
-
             layerView.watch("updating", function(val){
               if(!val){  // wait for the layer view to finish updating
                 layerView.queryFeatures().then(function(results){
@@ -199,6 +201,18 @@
 
           view.when(function() {
 
+            var filterBtn = document.createElement('button');
+            filterBtn.addEventListener("click", btnFn);
+            filterBtn.innerHTML = "Filtrar";
+
+
+
+            function btnFn(evt){
+              window.app.streamLayer.definitionExpression = "pp = 'true'";
+              window.app.reset();
+            }
+
+
             // Display the chart in an Expand widget
             chartExpand = new Expand({
               expandIconClass: "esri-icon-chart",
@@ -208,14 +222,12 @@
               content: document.getElementById("chartPanel")
             });
 
+            view.ui.add(filterBtn, "bottom-left");
             view.ui.add(chartExpand, "top-right");
           });
 
         }
 
-
-        // Create an population pyramid chart for the census tracts that intersect the buffer polygon
-        // Chart is created using the Chart.js library
         const canvasElement = document.getElementById("chart");
         var chart = new Chart(canvasElement.getContext("2d"), {
           type: 'pie',
@@ -229,13 +241,6 @@
           },
           options : {
             responsive : true,
-            // tooltips : {
-            //   callbacks: {
-            //     label : function(tooltipItem, data){
-            //       console.log(data[tooltipItem.datasetIndex]);
-            //     }
-            //   }
-            // },
             legend : {
               display: false
             },
@@ -250,19 +255,28 @@
         });
 
         function updateChart(arr) {
-
           let total = arr.reduce((old,cur) => old+cur,0)
           chart.data.datasets[0].data = arr;
           chart.options.title.text = `Tweets [${total}]`;
           chart.update();
-          //console.log(`Updated : ${chart.data.datasets[0].data}`);
         }
 
         return {
           map : map,
           view: view,
           widget : chartExpand,
-          streamLayer : streamLayer
+          streamLayer : streamLayer,
+          reset : function(){
+            updateChart([0,0,0,0,0]);
+            window.counter =  {
+              pp : new Set(),
+              psoe: new Set(),
+              ciudadanos : new Set() ,
+              vox : new Set(),
+              podemos: new Set()
+            };
+          }
+
         }
       };
 
