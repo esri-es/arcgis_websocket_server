@@ -32,7 +32,7 @@
       }
 
       #chartPanel {
-        background: #fff;
+        background: rgba(255,255,255,0.3);
         font: "Avenir Next W00";
         line-height: 1.5em;
         overflow: auto;
@@ -45,6 +45,7 @@
       .chart {
         height: 280px;
       }
+
     </style>
 
     <!-- Load the Chart.js library -->
@@ -59,14 +60,11 @@
         "esri/geometry/geometryEngine",
         "esri/widgets/Expand",
         "esri/layers/StreamLayer"
-      ], function(
-        Map,
-        MapView,
-        FeatureLayer,
-        geometryEngine,
-        Expand,
-        StreamLayer
-      ) {
+      ], function(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer){
+        window.app = init(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer);
+      });
+
+      function init(Map,MapView,FeatureLayer,geometryEngine,Expand,StreamLayer) {
         // App 'globals'
         let chartExpand;
 
@@ -81,7 +79,17 @@
           url: "http://localhost:9000/arcgis/rest/services/twitter/StreamServer",
           purgeOptions: {
             displayCount: 10000
-          }
+          },
+          featureReduction: {
+            type: "selection"
+          },
+          popupTemplate : {
+            title : "Tweet from {screename}",
+            content : function(target) {
+              return tweetContent(target.graphic.attributes);
+            }
+          },
+          outFields : ["*"]
         });
 
         // Create map
@@ -95,7 +103,12 @@
           container: "viewDiv",
           map: map,
           zoom: 6,
-          center: [-4.033410164417723, 40.62277993555629]
+          center: [-4.033410164417723, 40.62277993555629],
+          highlightOptions: {
+            color: [255, 255, 0, 1],
+            haloOpacity: 0.9,
+            fillOpacity: 1
+          }
         });
 
         var counter = {
@@ -118,16 +131,45 @@
           ]);
         }, 1000);
 
+
+        function tweetContent(obj){
+          return `<div>
+            <img src="${obj.profile_image_url_https}" />
+            <p>${obj.text}</p>
+            <a href="${obj.tweet_url}" target="_blank">Tweet</a>
+          </div>`
+        }
+
+
+        var highlight;
+
+        function highlightFeatures(property){
+
+          let query = {
+            where : `${property} = true`
+          };
+          view.layerViews.items[0].queryFeatures(query).then(function(results){
+            if (highlight) {
+              highlight.remove();
+            }
+            if (results.features.length > 0) {
+              highlight = view.layerViews.items[0].highlight(results.features.map(el => el.attributes["__OBJECTID"]));
+            }
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+        }
+
         setUpAppUI();
 
         function setUpAppUI() {
-
           view.whenLayerView(streamLayer).then(function(layerView){
+
             layerView.watch("updating", function(val){
               if(!val){  // wait for the layer view to finish updating
                 layerView.queryFeatures().then(function(results){
                   if (results.features.length > 0) {
-
                    results.features
                     .map(el => ({
                         id : el.attributes.id_str,
@@ -135,8 +177,10 @@
                         vox : el.attributes.vox,
                         ciudadanos : el.attributes.ciudadanos,
                         psoe : el.attributes.psoe,
-                        podemos : el.attributes.psoe
+                        podemos : el.attributes.psoe,
+                        OBJECTID : el.attributes["__OBJECTID"]
                       }))
+                    .filter(el => el.pp || el.vox || el.ciudadanos || el.psoe || el.podemos)
                     .reduce((old,cur,i,arr) => {
 
                         Object.keys(cur).forEach(k => {
@@ -155,6 +199,7 @@
           });
 
           view.when(function() {
+
             // Display the chart in an Expand widget
             chartExpand = new Expand({
               expandIconClass: "esri-icon-chart",
@@ -169,6 +214,13 @@
 
         }
 
+        var partidos = [
+          "pp",
+          "psoe",
+          "ciudadanos",
+          "podemos",
+          "vox"
+        ];
         // Create an population pyramid chart for the census tracts that intersect the buffer polygon
         // Chart is created using the Chart.js library
         const canvasElement = document.getElementById("chart");
@@ -180,33 +232,47 @@
                 backgroundColor : ["#2196f3","#f44336","#ea8a0b","#9c27b0","#8bc34a"],
                 label : "Tweets"
             }],
-            labels : [
-              "PP",
-              "PSOE",
-              "Ciudadanos",
-              "Unidas Podemos",
-              "Vox"
-            ]
+            labels : partidos
           },
           options : {
             responsive : true,
+            // tooltips : {
+            //   callbacks: {
+            //     label : function(tooltipItem, data){
+            //       console.log(data[tooltipItem.datasetIndex]);
+            //     }
+            //   }
+            // },
+            legend : {
+              display: false
+            },
             title: {
               display: true,
               text: 'Tweets'
+            },
+            onClick : function(event,arr){
+              highlightFeatures(partidos[arr[0]._index]);
             }
           }
         });
 
         function updateChart(arr) {
-          console.log(arr);
+
           let total = arr.reduce((old,cur) => old+cur,0)
           chart.data.datasets[0].data = arr;
           chart.options.title.text = `Tweets [${total}]`;
           chart.update();
-          console.log(`Updated : ${chart.data.datasets[0].data}`);
+          //console.log(`Updated : ${chart.data.datasets[0].data}`);
         }
 
-      });
+        return {
+          map : map,
+          view: view,
+          widget : chartExpand,
+          streamLayer : streamLayer
+        }
+      };
+
     </script>
   </head>
 
