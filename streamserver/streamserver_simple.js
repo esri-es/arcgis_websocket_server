@@ -11,12 +11,35 @@ const streamServerFilter = require('./utils/filter_utils.js');
 
 const JSAPI_VERSION = process.argv[3] || "4.11";
 
+var FIELDS_SCHEMA;
+
 function _shouldChallenge(origin) {
   return !/arcgis\.com/.test(origin) || !/^(3\.[1-9][0-9]|4\.[1-8]?)$/.test(JSAPI_VERSION);
 }
 
 function _isFilterChallenge(obj) {
     return obj.hasOwnProperty("filter") && obj.filter.hasOwnProperty("outFields");
+}
+
+function _udpateFieldsSchema(obj) {
+  FIELDS_SCHEMA = obj;
+
+}
+
+function _properFilter(str) {
+  if (str.length === 0){
+    return false;
+  } else {
+    try {
+      let items = str.split(" ");
+      console.log(`Filter Items: (${items})`);
+      return true;
+    } catch(err) {
+      console.error(`Failed parsing filter`);
+      return false;
+    }
+  }
+
 }
 
 function _updateServiceInfo(obj) {
@@ -48,6 +71,7 @@ function _guessGeoFields (arr) {
 
 function _setup(config) {
   let fields = esriTypes.convertToEsriFields(config.payload);
+  _udpateFieldsSchema(fields);
   let newConfig = {
     ws : {
       server : {
@@ -138,19 +162,28 @@ function _setupSource(obj) {
       try {
         let clientMessage = JSON.parse(data);
         if(_shouldChallenge(request.headers.origin) && _isFilterChallenge(clientMessage)){
-          console.log(`Received challenge filter from [${stream.socket}]`);
-
+          console.log(`Received challenge filter from [${stream.socket.uuid}]`);
+          // Challenge
           stream.write(JSON.stringify({
             error: null,
             ...clientMessage
           }));
-          console.log("Challenge done!");
-          if (clientMessage.filter.hasOwnProperty("where") && clientMessage.filter.where.length > 0) {
+          console.log(`Challenge done for [${stream.socket.uuid}]`);
+
+        }
+
+        if (clientMessage.filter.hasOwnProperty("where") && _properFilter(clientMessage.filter.where)) {
+          // Store filter for websocket client
+
+          if(/custom_reset/.test(clientMessage.filter.where)) {
+            delete stream.socket.filter;
+          } else {
+            console.log(`Applied filter : [${clientMessage.filter.where}]`);
+
             stream.socket.filter = clientMessage.filter.where;
+            console.log(stream.socket.filter);
           }
-        } else {
-          // Filters
-          stream.socket.filter = clientMessage.filter.where;
+
         }
 
       } catch(err) {
@@ -163,7 +196,7 @@ function _setupSource(obj) {
           return stream.socket.challenge ? data : null
         },
         data => {
-          console.log(`pipeline - filter : [${stream.socket.hasOwnProperty("filter") ? "ON" : "OFF"}]`);
+
           return stream.socket.hasOwnProperty("filter")
             ? streamServerFilter(data.value.attributes,stream.socket.filter)
               ? data

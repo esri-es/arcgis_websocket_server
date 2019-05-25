@@ -118,7 +118,7 @@
             window.counter.podemos.size,
             window.counter.vox.size,
           ]);
-        }, 1000);
+        }, 1500);
 
 
 
@@ -165,39 +165,50 @@
 
         setUpAppUI();
 
+        var watchHandle;
+
+        function setupWatching(lView,counter) {
+          if (watchHandle) {
+            watchHandle.remove();
+          }
+          watchHandle = lView.watch("updating", function(val){
+            if(!val){  // wait for the layer view to finish updating
+              lView.queryFeatures().then(function(results){
+                if (results.features.length > 0) {
+                 results.features
+                  .filter(el => el.attributes.markWords.length > 0)
+                  .map(el => ({
+                      id : el.attributes.id_str,
+                      pp : el.attributes.pp,
+                      vox : el.attributes.vox,
+                      ciudadanos : el.attributes.ciudadanos,
+                      psoe : el.attributes.psoe,
+                      podemos : el.attributes.psoe
+                    }))
+                  .reduce((old,cur,i,arr) => {
+                      let {id, ...partidos} = cur;
+                      Object.keys(partidos).forEach(k => {
+                        if (cur[k] === true ) {
+                          window.counter[k].add(cur.id)
+                        }
+                      });
+                      return old;
+                  }, counter)
+
+                }
+
+              });
+            }
+          });
+        }
+
         function setUpAppUI() {
           view.whenLayerView(streamLayer).then(function(layerView){
-            layerView.watch("updating", function(val){
-              if(!val){  // wait for the layer view to finish updating
-                layerView.queryFeatures().then(function(results){
-                  if (results.features.length > 0) {
-                   results.features
-                    .filter(el => el.attributes.markWords.length > 0)
-                    .map(el => ({
-                        id : el.attributes.id_str,
-                        pp : el.attributes.pp,
-                        vox : el.attributes.vox,
-                        ciudadanos : el.attributes.ciudadanos,
-                        psoe : el.attributes.psoe,
-                        podemos : el.attributes.psoe,
-                        markWords : el.attributes.markWords
-                      }))
-                    .reduce((old,cur,i,arr) => {
 
-                        Object.keys(cur).forEach(k => {
-                          if (cur[k] === true) {
-                            window.counter[k].add(cur.id)
-                          }
-                        });
-                        return old;
-                    }, window.counter)
+            setupWatching(layerView);
 
-                  }
+        });
 
-                });
-              }
-            });
-          });
 
           view.when(function() {
 
@@ -279,6 +290,8 @@
               vox : new Set(),
               podemos: new Set()
             };
+            setupWatching(view.layerViews.items[0], window.counter);
+
           }
 
         }

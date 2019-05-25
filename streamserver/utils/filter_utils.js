@@ -2,7 +2,6 @@ var opsExt = '(AND|OR)';
 var opsInt = '(NOT)?(=|<>|LIKE|IS)(NOT)?';
 var reOpsExt = new RegExp(`\\)\\s${opsExt}\\s\\(`,"gi");
 var reOpsInt = new RegExp(`\\s${opsInt}\\s`,"gi");
-var str = `(ciudadanos = '1') AND (ciudadanos <> '1') AND (ciudadanos LIKE '1%') AND (ciudadanos LIKE '%1') AND (ciudadanos LIKE '%1%') AND (ciudadanos NOT LIKE '%1%') AND (ciudadanos IS NULL) AND (ciudadanos IS NOT NULL)`;
 const util = require("util");
 
 function buildQuery(field, op, value) {
@@ -75,21 +74,10 @@ var operators = {
 }
 
 function translate (d,arr) {
-   // ["ciudadanos", "=", "true"]
-   //console.log(`filter : ${arr.join(" ")}`);
    return operators[arr[1]](d,arr[0],arr[2]);
-
 }
 
-
-
 function evaluateQuery(d, queryStr) {
-  // console.log(queryStr);
-  // console.log({
-  //   text : d.text,
-  //   ciudadanos : d.ciudadanos
-  // });
-
    let operatorChain = queryStr.split(/[^(AND|OR)]/).filter(el => /(AND|OR)/.test(el));
    var lista = queryStr.split(reOpsExt)
     .map(exp => exp.replace(/(\(|\))/g,""))
