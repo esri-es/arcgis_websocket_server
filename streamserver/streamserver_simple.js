@@ -154,6 +154,7 @@ function _setupSource(obj) {
     stream.socket.uuid = uuidv4();
     stream.socket.challenge = _shouldChallenge(request.headers.origin);
     console.log(`client [${stream.socket.uuid}] connected`);
+
     var pipeline;
 
     stream.on('data', function(buf){
@@ -217,13 +218,19 @@ function _setupSource(obj) {
     });
     stream.on('close',function(){
       console.log(`client [${stream.socket.uuid}] disconnected`);
-      serverRef.clients.delete(stream.socket);
+    });
+
+    stream.on('error', function(err){
+      console.log(`Abrupted disconnection from [${stream.socket.uuid}]`);
+      disconnectPipeline();
+    });
+
+    function disconnectPipeline() {
       if(pipeline) {
         pipeline.unpipe();
         pipeline.destroy();
       }
-    });
-
+    }
 
   }
 }
@@ -245,6 +252,8 @@ function start(cfg){
   let wsRemoteClient = websocket(conf.ws.client.wsUrl, {
     perMessageDeflate: false
   });
+  wsRemoteClient.setMaxListeners(0);
+
 
   var fieldGeo = avoidGeo
     ? null
@@ -261,7 +270,11 @@ function start(cfg){
       pullStream : wsRemoteClient,
       service: conf.service,
       geo : fieldGeo
-    }))
+    }));
+
+   wss.on("error", function(err){
+     console.log( `CACHED on WS [${err}]`);
+   })
 }
 
 module.exports = {

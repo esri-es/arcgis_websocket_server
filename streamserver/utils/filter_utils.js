@@ -1,3 +1,4 @@
+const regexgen = require('regexgen');
 var opsExt = '(AND|OR)';
 var opsInt = '(NOT)?(=|<>|LIKE|IS)(NOT)?';
 var reOpsExt = new RegExp(`\\)\\s${opsExt}\\s\\(`,"gi");
@@ -5,7 +6,6 @@ var reOpsInt = new RegExp(`\\s${opsInt}\\s`,"gi");
 const util = require("util");
 
 function buildQuery(field, op, value) {
-  console.log(`Query Parsed : [${field} ${op} ${value}]`);
   return `(${field} ${op} ${value})`;
 }
 
@@ -101,7 +101,6 @@ function evaluateQuery(d, queryStr) {
        }
     },true);
 
-    console.log(`Result : ${result}`);
     //console.log(`data : [${util.inspect(d, { compact: true, depth: 5, breakLength: 80 })}]\nquery [${queryStr}] -> ${lista} -> ${result}` );
 
     return result;
