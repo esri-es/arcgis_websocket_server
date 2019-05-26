@@ -20,6 +20,8 @@ process
     console.error(err, 'Uncaught Exception thrown');
   });
 
+process.setMaxListeners(0);
+
 var wsClientConn = process.argv[2];
 testConnection(wsClientConn)
   .then(conf => {
