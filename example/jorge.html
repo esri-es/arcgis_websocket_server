@@ -111,6 +111,7 @@
         window.counter = counter;
 
         window.setInterval(function(){
+          console.dir(window.counter);
           updateChart([
             window.counter.pp.size,
             window.counter.psoe.size,
@@ -132,6 +133,7 @@
           return `<div>
             <img src="${obj.profile_image_url_https}" />
             <p>${obj.markWords.join(",")}</p>
+            <p>${obj.lon},${obj.lat}</p>
             <p><b>Match:</b>${obj.match}</p>
             <p><b>Location:</b>${obj.location}</p>
             <p>${markText}</p>
@@ -150,6 +152,7 @@
           let query = {
             where : `${property} = true`
           };
+          console.log(`querying [${property}]`);
           view.layerViews.items[0].queryFeatures(query).then(function(results){
             if (highlight) {
               highlight.remove();
@@ -183,7 +186,7 @@
                       vox : el.attributes.vox,
                       ciudadanos : el.attributes.ciudadanos,
                       psoe : el.attributes.psoe,
-                      podemos : el.attributes.psoe
+                      podemos : el.attributes.podemos
                     }))
                   .reduce((old,cur,i,arr) => {
                       let {id, ...partidos} = cur;
