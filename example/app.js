@@ -43,7 +43,7 @@ require([
         //  mapView: mapView,
         container: "widgetDiv",
         layer: {
-            url: "https://80b04449.ngrok.io/arcgis/rest/services/twitter/StreamServer",
+            url: "https://0906e012.ngrok.io/arcgis/rest/services/twitter/StreamServer",
             renderer: {
                 "type": "simple",
                 "symbol": {
@@ -51,7 +51,7 @@ require([
                     "url": "https://static.arcgis.com/images/Symbols/Firefly/FireflyC2.png",
                 }
             },
-            definitionExpression: "is_rt = 'false'",
+            // definitionExpression: "is_rt = 'false'",
             popupTemplate: {
                 title: "@{username}",
                 content: [{
@@ -241,7 +241,7 @@ require([
             year = d.getFullYear(),
 
             t = {
-            hour: d.getHours(),
+            hour: d.getHours()-2,
             minutes: d.getMinutes(),
             seconds: d.getSeconds()
         };
