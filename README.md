@@ -1,5 +1,18 @@
 # ArcGIS WebSocket Server
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Start the app](#start-the-app)
+  - [Using HTTPS (NGROK)](#using-https-ngrok)
+- [Known issues](#known-issues)
+  - [ArcGIS API for JavaScript version <= v4.8 & v3.x](#arcgis-api-for-javascript-version--v48--v3x)
+- [Additional documentation](#additional-documentation)
+- [Talk: Geolocating tweets in real time (in Spanish)](#talk-geolocating-tweets-in-real-time-in-spanish)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 This node server behaves as a [GeoEvent](https://www.esri.com/en-us/arcgis/products/arcgis-geoevent-server) [StreamServer](https://developers.arcgis.com/rest/services-reference/stream-service.htm) layer, so it will emit geographic features in the [Esri JSON](https://developers.arcgis.com/documentation/common-data-types/feature-object.htm) format though a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API). This way we will be able to display a real time layer in ArcGIS without an [ArcGIS Enterprise](https://www.esri.com/en-us/arcgis/products/arcgis-enterprise/overview) stack.
 
 ![custom websocket server in arcgis](https://user-images.githubusercontent.com/826965/53808519-bc44bb80-3f52-11e9-9635-8687d5046bc4.gif)
@@ -55,7 +68,7 @@ If you want to test this from the [sandbox sample](https://developers.arcgis.com
 
 Before [this commit](https://github.com/hhkaos/arcgis_websocket_server/commit/22c48299d92e7761e6c718d2c6afa525284fc448) on May 5, 2015 this streamserver was only working with JS API <= v4.8 and v3.x. If you want to know more you can also [check this issue](https://github.com/hhkaos/arcgis_websocket_server/issues/3).
 
-## Documentation
+## Additional documentation
 
 * [ArcGIS Server > Stream services](http://enterprise.arcgis.com/en/server/latest/publish-services/linux/stream-services.htm)
 * [ArcGIS REST API > StreamServices](https://developers.arcgis.com/rest/services-reference/stream-service.htm)
@@ -67,3 +80,26 @@ Before [this commit](https://github.com/hhkaos/arcgis_websocket_server/commit/22
   * [Mapping and Tracking that Your Users Crave](https://www.youtube.com/watch?v=VWoXSJWgwrU)
   * [Esri DevSummit 2017 Keynote: PubNub CEO Todd Greene](https://www.youtube.com/watch?v=yrbODI7cuAk)
 * [Search more about "Stream services"](https://esri-es.github.io/arcgis-search/?amp%3Butm_source=opensearch&search=%22Stream+services%22)
+
+## Talk: Geolocating tweets in real time (in Spanish)
+
+En la charla [Geolocalizando tweets en tiempo real](http://slides.com/hhkaos/geolocalizando-tweets#/) del día día 24 de Julio de 2019 se explicó:
+
+* Objetivos y resultados del experimento
+* Cómo lanzar el proyecto
+* Demo: Cargar los tweets en una StreamLayer
+* Demo: Cargar los tweets en un Web map
+* Demo: Cargar los tweets con gráficar en tº real
+* Diagrama del comportamiento de [twitter-rt-service](https://github.com/esri-es/twitter-rt-service)
+* Mejoras pendientes en [twitter-rt-service](https://github.com/esri-es/twitter-rt-service)
+* Diagrama del comportamiento de [arcgis_websocket_server](https://github.com/esri-es/arcgis_websocket_server)
+* Mejoras pendientes en [arcgis_websocket_server](https://github.com/esri-es/arcgis_websocket_server)
+* Estructura de ficheros del proyecto: [twitter-rt-service](https://github.com/esri-es/twitter-rt-service)
+* Explicación del código: [twitter-rt-service](https://github.com/esri-es/twitter-rt-service)
+* Estructura de ficheros del proyecto: [arcgis_websocket_server](https://github.com/esri-es/arcgis_websocket_server)
+* Explicación del código: [arcgis_websocket_server](https://github.com/esri-es/arcgis_websocket_server)
+* Despedida, preguntas y agracedimientos
+
+A continuación puede encontrar el vídeo en Youtube con un índice interactivo en la descripción del vídeo:
+
+[![](http://i3.ytimg.com/vi/PeTzi-ficFo/hqdefault.jpg)](https://www.youtube.com/watch?v=PeTzi-ficFo)
